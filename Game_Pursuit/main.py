@@ -7,14 +7,20 @@ from collections import deque
 # Khởi tạo Pygame
 pygame.init()
 
-# Thiết lập cửa sổ game
-WIDTH = 600
-HEIGHT = 600
+# Thiết lập cửa sổ game (lớn hơn mê cung)
+WINDOW_WIDTH = 1200  # Kích thước cửa sổ mới
+WINDOW_HEIGHT = 700
 GRID_SIZE = 30
-GRID_WIDTH = WIDTH // GRID_SIZE
-GRID_HEIGHT = HEIGHT // GRID_SIZE
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+GRID_WIDTH = 20  # Số ô lưới theo chiều ngang
+GRID_HEIGHT = 20  # Số ô lưới theo chiều dọc
+MAZE_WIDTH = GRID_WIDTH * GRID_SIZE  # Kích thước mê cung: 300
+MAZE_HEIGHT = GRID_HEIGHT * GRID_SIZE  # Kích thước mê cung: 300
+screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption("Pursuit Game")
+
+# Tính toán tọa độ để căn giữa mê cung
+MAZE_OFFSET_X = (WINDOW_WIDTH - MAZE_WIDTH) // 2  # 100 (800-600)/2
+MAZE_OFFSET_Y = (WINDOW_HEIGHT - MAZE_HEIGHT) // 2  # 100 (800-600)/2
 
 # Màu sắc
 WHITE = (255, 255, 255)
@@ -45,7 +51,7 @@ except:
 # Tạo lưới (0: trống, 1: chướng ngại vật)
 grid = [[0 for _ in range(GRID_WIDTH)] for _ in range(GRID_HEIGHT)]
 
-# Định nghĩa các bản đồ
+# Định nghĩa các bản đồ (giữ nguyên)
 MAPS = {
     "Me cung cuu cong chúa": [
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
@@ -115,28 +121,25 @@ MAPS = {
     ]
 }
 
-
 # Tải bản đồ được chọn
 def load_map(map_name):
     global grid
     grid = [row[:] for row in MAPS[map_name]]
 
-
 # Đảm bảo vị trí ban đầu không nằm trên chướng ngại vật
 def get_empty_position():
     while True:
-        x = random.randint(0, GRID_WIDTH - 1)
+        x= random.randint(0, GRID_WIDTH - 1)
         y = random.randint(0, GRID_HEIGHT - 1)
         if grid[y][x] == 0:
             return (x, y)
 
-
-# Vẽ lưới và chướng ngại vật
+# Vẽ lưới và chướng ngại vật (căn giữa)
 def draw_grid():
-    pygame.draw.rect(screen, DARK_GRAY, (0, 0, WIDTH, HEIGHT), 5)
+    pygame.draw.rect(screen, DARK_GRAY, (MAZE_OFFSET_X, MAZE_OFFSET_Y, MAZE_WIDTH, MAZE_HEIGHT), 5)
     for y in range(GRID_HEIGHT):
         for x in range(GRID_WIDTH):
-            rect = pygame.Rect(x * GRID_SIZE, y * GRID_SIZE, GRID_SIZE, GRID_SIZE)
+            rect = pygame.Rect(MAZE_OFFSET_X + x * GRID_SIZE, MAZE_OFFSET_Y + y * GRID_SIZE, GRID_SIZE, GRID_SIZE)
             if grid[y][x] == 1:
                 pygame.draw.rect(screen, GRAY, rect)
                 pygame.draw.rect(screen, DARK_GRAY, rect, 2)
@@ -144,20 +147,16 @@ def draw_grid():
                 pygame.draw.rect(screen, LIGHT_GREEN, rect)
             pygame.draw.rect(screen, BLACK, rect, 1)
 
-
-# Chuyển đổi tọa độ
+# Chuyển đổi tọa độ (căn giữa)
 def to_grid_pos(x, y):
-    return (x // GRID_SIZE, y // GRID_SIZE)
-
+    return ((x - MAZE_OFFSET_X) // GRID_SIZE, (y - MAZE_OFFSET_Y) // GRID_SIZE)
 
 def to_pixel_pos(grid_x, grid_y):
-    return (grid_x * GRID_SIZE + GRID_SIZE // 2, grid_y * GRID_SIZE + GRID_SIZE // 2)
-
+    return (MAZE_OFFSET_X + grid_x * GRID_SIZE + GRID_SIZE // 2, MAZE_OFFSET_Y + grid_y * GRID_SIZE + GRID_SIZE // 2)
 
 # Heuristic cho các thuật toán có thông tin
 def heuristic(a, b):
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
-
 
 # BFS
 def bfs_search(start, goal):
@@ -189,7 +188,6 @@ def bfs_search(start, goal):
     path.reverse()
     return path
 
-
 # DFS
 def dfs_search(start, goal):
     stack = [start]
@@ -219,7 +217,6 @@ def dfs_search(start, goal):
     path.append(start)
     path.reverse()
     return path
-
 
 # A*
 def a_star_search(start, goal):
@@ -253,7 +250,6 @@ def a_star_search(start, goal):
     path.append(start)
     path.reverse()
     return path
-
 
 # IDA*
 def ida_star_search(start, goal):
@@ -294,7 +290,6 @@ def ida_star_search(start, goal):
             return []
         threshold = new_threshold
 
-
 # Greedy Best-First Search (GDFS)
 def greedy_best_first_search(start, goal):
     frontier = []
@@ -326,7 +321,6 @@ def greedy_best_first_search(start, goal):
     path.append(start)
     path.reverse()
     return path
-
 
 # Uniform Cost Search (UCS)
 def ucs_search(start, goal):
@@ -360,8 +354,7 @@ def ucs_search(start, goal):
     path.reverse()
     return path
 
-
-# Lớp Player
+# Lớp Player (căn giữa)
 class Player(pygame.sprite.Sprite):
     def __init__(self, grid_x, grid_y):
         super().__init__()
@@ -395,8 +388,7 @@ class Player(pygame.sprite.Sprite):
             self.grid_pos = (new_grid_x, new_grid_y)
             self.rect.center = to_pixel_pos(new_grid_x, new_grid_y)
 
-
-# Lớp Enemy
+# Lớp Enemy (căn giữa)
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, grid_x, grid_y, player, algorithm, difficulty):
         super().__init__()
@@ -447,14 +439,22 @@ class Enemy(pygame.sprite.Sprite):
                 self.grid_pos = next_pos
                 self.rect.center = to_pixel_pos(next_pos[0], next_pos[1])
 
-
 # Tải hình nền
 try:
-    background = pygame.image.load("background.jpg").convert()
-    background = pygame.transform.scale(background, (WIDTH, HEIGHT))
+    background = pygame.image.load(r"D:\DO_AN_HK2_Nam2\AI_Project\Game_Pursuit\asset\anh_backgound\anh8.jpg").convert()
+    background = pygame.transform.scale(background, (WINDOW_WIDTH, WINDOW_HEIGHT))
 except:
-    background = pygame.Surface((WIDTH, HEIGHT))
+    background = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
     background.fill((50, 150, 50))
+
+# Tải hình nền lớn hơn cho mê cung
+try:
+    game_background = pygame.image.load(r"D:\DO_AN_HK2_Nam2\AI_Project\Game_Pursuit\asset\anh_backgound\anh4.jpg"
+                                        r"").convert()
+    game_background = pygame.transform.scale(game_background, (WINDOW_WIDTH, WINDOW_HEIGHT))
+except:
+    game_background = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+    game_background.fill((100, 100, 100))  # Màu xám để phân biệt
 
 # Tải âm thanh
 try:
@@ -464,12 +464,11 @@ try:
 except:
     collision_sound = None
 
-
-# Menu chọn thuật toán, chế độ chơi và bản đồ
+# Menu chọn thuật toán, chế độ chơi và bản đồ (cập nhật kích thước)
 def menu_screen():
     algorithms = ["BFS", "DFS", "A*", "IDA*", "GDFS", "UCS"]
     difficulties = ["Easy", "Medium", "Hard"]
-    maps = list(MAPS.keys())  # ["Map 1", "Map 2", "Map 3"]
+    maps = list(MAPS.keys())
     selected_algorithm = 0
     selected_difficulty = 0
     selected_map = 0
@@ -477,23 +476,21 @@ def menu_screen():
 
     while True:
         screen.blit(background, (0, 0))
-        overlay = pygame.Surface((WIDTH, HEIGHT))
+        overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
         overlay.fill(DARK_BLUE)
         overlay.set_alpha(200)
         screen.blit(overlay, (0, 0))
 
-        # Tiêu đề
         title = font_large.render("Pursuit Game", True, WHITE)
-        title_rect = title.get_rect(center=(WIDTH // 2, 60))
+        title_rect = title.get_rect(center=(WINDOW_WIDTH // 2, 60))
         title_bg = pygame.Surface((title_rect.width + 20, title_rect.height + 10))
         title_bg.fill(BLACK)
         title_bg.set_alpha(150)
         screen.blit(title_bg, (title_rect.x - 10, title_rect.y - 5))
         screen.blit(title, title_rect)
 
-        # Hiển thị lựa chọn thuật toán
         algo_text = font.render("Select Algorithm:", True, WHITE)
-        algo_rect = algo_text.get_rect(center=(WIDTH // 2, 110))
+        algo_rect = algo_text.get_rect(center=(WINDOW_WIDTH // 2, 110))
         algo_bg = pygame.Surface((algo_rect.width + 20, algo_rect.height + 10))
         algo_bg.fill(BLACK)
         algo_bg.set_alpha(150)
@@ -503,14 +500,13 @@ def menu_screen():
         for i, algo in enumerate(algorithms):
             color = YELLOW if i == selected_algorithm else WHITE
             text = font_small.render(algo, True, color)
-            text_rect = text.get_rect(center=(WIDTH // 2, 150 + i * 30))
+            text_rect = text.get_rect(center=(WINDOW_WIDTH // 2, 150 + i * 30))
             if i == selected_algorithm and selecting == "algorithm":
                 pygame.draw.rect(screen, YELLOW, text_rect.inflate(20, 10), 2)
             screen.blit(text, text_rect)
 
-        # Hiển thị lựa chọn chế độ chơi
         diff_text = font.render("Select Difficulty:", True, WHITE)
-        diff_rect = diff_text.get_rect(center=(WIDTH // 2, 350))
+        diff_rect = diff_text.get_rect(center=(WINDOW_WIDTH // 2, 350))
         diff_bg = pygame.Surface((diff_rect.width + 20, diff_rect.height + 10))
         diff_bg.fill(BLACK)
         diff_bg.set_alpha(150)
@@ -520,14 +516,13 @@ def menu_screen():
         for i, diff in enumerate(difficulties):
             color = YELLOW if i == selected_difficulty else WHITE
             text = font_small.render(diff, True, color)
-            text_rect = text.get_rect(center=(WIDTH // 2, 380 + i * 30))
+            text_rect = text.get_rect(center=(WINDOW_WIDTH // 2, 380 + i * 30))
             if i == selected_difficulty and selecting == "difficulty":
                 pygame.draw.rect(screen, YELLOW, text_rect.inflate(20, 10), 2)
             screen.blit(text, text_rect)
 
-        # Hiển thị lựa chọn bản đồ
         map_text = font.render("Select Map:", True, WHITE)
-        map_rect = map_text.get_rect(center=(WIDTH // 2, 470))
+        map_rect = map_text.get_rect(center=(WINDOW_WIDTH // 2, 470))
         map_bg = pygame.Surface((map_rect.width + 20, map_rect.height + 10))
         map_bg.fill(BLACK)
         map_bg.set_alpha(150)
@@ -537,7 +532,7 @@ def menu_screen():
         for i, map_name in enumerate(maps):
             color = YELLOW if i == selected_map else WHITE
             text = font_small.render(map_name, True, color)
-            text_rect = text.get_rect(center=(WIDTH // 2, 500 + i * 30))
+            text_rect = text.get_rect(center=(WINDOW_WIDTH // 2, 500 + i * 30))
             if i == selected_map and selecting == "map":
                 pygame.draw.rect(screen, YELLOW, text_rect.inflate(20, 10), 2)
             screen.blit(text, text_rect)
@@ -570,11 +565,10 @@ def menu_screen():
                     elif event.key == pygame.K_RETURN:
                         return algorithms[selected_algorithm], difficulties[selected_difficulty], maps[selected_map]
 
-
-# Game Over
+# Game Over (cập nhật kích thước)
 def game_over_screen(final_score):
     screen.blit(background, (0, 0))
-    overlay = pygame.Surface((WIDTH, HEIGHT))
+    overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
     overlay.fill(DARK_BLUE)
     overlay.set_alpha(200)
     screen.blit(overlay, (0, 0))
@@ -583,9 +577,9 @@ def game_over_screen(final_score):
     score_text = font.render(f"Final Score: {final_score}", True, WHITE)
     replay_text = font.render("Press R to Replay", True, WHITE)
 
-    game_over_rect = game_over_text.get_rect(center=(WIDTH // 2, HEIGHT // 3))
-    score_rect = score_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
-    replay_rect = replay_text.get_rect(center=(WIDTH // 2, HEIGHT * 2 // 3 + 20))
+    game_over_rect = game_over_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 3))
+    score_rect = score_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2))
+    replay_rect = replay_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT * 2 // 3 + 20))
 
     for text, rect in [(game_over_text, game_over_rect), (score_text, score_rect), (replay_text, replay_rect)]:
         bg = pygame.Surface((rect.width + 20, rect.height + 10))
@@ -606,26 +600,24 @@ def game_over_screen(final_score):
                     return True
     return False
 
-
-# Vẽ bảng thông tin (HUD)
+# Vẽ bảng thông tin (HUD) (căn chỉnh lại)
 def draw_hud(score, algorithm, difficulty, map_name):
     hud_width = 220
-    hud_height = 140  # Tăng chiều cao để chứa thêm thông tin bản đồ
+    hud_height = 140
     hud = pygame.Surface((hud_width, hud_height))
     hud.fill(DARK_BLUE)
     hud.set_alpha(200)
-    screen.blit(hud, (10, 10))
+    screen.blit(hud, (MAZE_OFFSET_X + 10, MAZE_OFFSET_Y + 10))  # Đặt HUD trong mê cung
 
     score_text = font.render(f"Score: {score}", True, WHITE)
     algo_text = font_small.render(f"Algorithm: {algorithm}", True, WHITE)
     diff_text = font_small.render(f"Difficulty: {difficulty}", True, WHITE)
     map_text = font_small.render(f"Map: {map_name}", True, WHITE)
 
-    screen.blit(score_text, (20, 20))
-    screen.blit(algo_text, (20, 50))
-    screen.blit(diff_text, (20, 80))
-    screen.blit(map_text, (20, 110))
-
+    screen.blit(score_text, (MAZE_OFFSET_X + 20, MAZE_OFFSET_Y + 20))
+    screen.blit(algo_text, (MAZE_OFFSET_X + 20, MAZE_OFFSET_Y + 50))
+    screen.blit(diff_text, (MAZE_OFFSET_X + 20, MAZE_OFFSET_Y + 80))
+    screen.blit(map_text, (MAZE_OFFSET_X + 20, MAZE_OFFSET_Y + 110))
 
 # Vòng lặp game chính
 running = True
@@ -668,8 +660,8 @@ while running:
                 collision_sound.play()
             game_active = False
 
-        screen.blit(background, (0, 0))
-        draw_grid()
+        screen.blit(game_background, (0, 0))  # Vẽ hình nền lớn hơn
+        draw_grid()  # Vẽ mê cung ở giữa
         all_sprites.draw(screen)
         draw_hud(score, algorithm, difficulty, map_name)
         pygame.display.flip()
