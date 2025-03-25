@@ -441,7 +441,7 @@ class Enemy(pygame.sprite.Sprite):
 
 # Tải hình nền
 try:
-    background = pygame.image.load(r"D:\DO_AN_HK2_Nam2\AI_Project\Game_Pursuit\asset\anh_backgound\anh8.jpg").convert()
+    background = pygame.image.load(r"asset\anh_backgound\anh8.jpg").convert()
     background = pygame.transform.scale(background, (WINDOW_WIDTH, WINDOW_HEIGHT))
 except:
     background = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -449,7 +449,7 @@ except:
 
 # Tải hình nền lớn hơn cho mê cung
 try:
-    game_background = pygame.image.load(r"D:\DO_AN_HK2_Nam2\AI_Project\Game_Pursuit\asset\anh_backgound\anh4.jpg"
+    game_background = pygame.image.load(r"asset\anh_backgound\anh4.jpg"
                                         r"").convert()
     game_background = pygame.transform.scale(game_background, (WINDOW_WIDTH, WINDOW_HEIGHT))
 except:
