@@ -7,20 +7,20 @@ from collections import deque
 # Khởi tạo Pygame
 pygame.init()
 
-# Thiết lập cửa sổ game (lớn hơn mê cung)
-WINDOW_WIDTH = 1200  # Kích thước cửa sổ mới
+# Thiết lập cửa sổ game
+WINDOW_WIDTH = 1200
 WINDOW_HEIGHT = 700
 GRID_SIZE = 30
-GRID_WIDTH = 20  # Số ô lưới theo chiều ngang
-GRID_HEIGHT = 20  # Số ô lưới theo chiều dọc
-MAZE_WIDTH = GRID_WIDTH * GRID_SIZE  # Kích thước mê cung: 300
-MAZE_HEIGHT = GRID_HEIGHT * GRID_SIZE  # Kích thước mê cung: 300
+GRID_WIDTH = 20
+GRID_HEIGHT = 20
+MAZE_WIDTH = GRID_WIDTH * GRID_SIZE  # 600
+MAZE_HEIGHT = GRID_HEIGHT * GRID_SIZE  # 600
 screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption("Pursuit Game")
 
 # Tính toán tọa độ để căn giữa mê cung
-MAZE_OFFSET_X = (WINDOW_WIDTH - MAZE_WIDTH) // 2  # 100 (800-600)/2
-MAZE_OFFSET_Y = (WINDOW_HEIGHT - MAZE_HEIGHT) // 2  # 100 (800-600)/2
+MAZE_OFFSET_X = (WINDOW_WIDTH - MAZE_WIDTH) // 2  # 300
+MAZE_OFFSET_Y = (WINDOW_HEIGHT - MAZE_HEIGHT) // 2  # 50
 
 # Màu sắc
 WHITE = (255, 255, 255)
@@ -48,7 +48,7 @@ except:
     font_large = pygame.font.Font(None, 40)
     font_small = pygame.font.Font(None, 18)
 
-# Tạo lưới (0: trống, 1: chướng ngại vật)
+# Tạo lưới
 grid = [[0 for _ in range(GRID_WIDTH)] for _ in range(GRID_HEIGHT)]
 
 # Định nghĩa các bản đồ (giữ nguyên)
@@ -121,20 +121,20 @@ MAPS = {
     ]
 }
 
-# Tải bản đồ được chọn
+# Tải bản đồ
 def load_map(map_name):
     global grid
     grid = [row[:] for row in MAPS[map_name]]
 
-# Đảm bảo vị trí ban đầu không nằm trên chướng ngại vật
+# Lấy vị trí trống
 def get_empty_position():
     while True:
-        x= random.randint(0, GRID_WIDTH - 1)
+        x = random.randint(0, GRID_WIDTH - 1)
         y = random.randint(0, GRID_HEIGHT - 1)
         if grid[y][x] == 0:
             return (x, y)
 
-# Vẽ lưới và chướng ngại vật (căn giữa)
+# Vẽ lưới
 def draw_grid():
     pygame.draw.rect(screen, DARK_GRAY, (MAZE_OFFSET_X, MAZE_OFFSET_Y, MAZE_WIDTH, MAZE_HEIGHT), 5)
     for y in range(GRID_HEIGHT):
@@ -144,16 +144,18 @@ def draw_grid():
                 pygame.draw.rect(screen, GRAY, rect)
                 pygame.draw.rect(screen, DARK_GRAY, rect, 2)
             else:
-                pygame.draw.rect(screen, LIGHT_GREEN, rect)
-            pygame.draw.rect(screen, BLACK, rect, 1)
+                pygame.draw.rect(screen, LIGHT_GREEN, rect)  # Nền xanh cho ô trống
+            pygame.draw.rect(screen, BLACK, rect, 1)  # Viền ô
+            #pygame.draw.rect(screen, BLACK, rect, 1)  # Ô trống trong suốt để thấy nền
 
-# Chuyển đổi tọa độ (căn giữa)
+# Chuyển đổi tọa độ
 def to_grid_pos(x, y):
     return ((x - MAZE_OFFSET_X) // GRID_SIZE, (y - MAZE_OFFSET_Y) // GRID_SIZE)
 
 def to_pixel_pos(grid_x, grid_y):
     return (MAZE_OFFSET_X + grid_x * GRID_SIZE + GRID_SIZE // 2, MAZE_OFFSET_Y + grid_y * GRID_SIZE + GRID_SIZE // 2)
 
+# Các hàm thuật toán
 # Heuristic cho các thuật toán có thông tin
 def heuristic(a, b):
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
@@ -354,7 +356,7 @@ def ucs_search(start, goal):
     path.reverse()
     return path
 
-# Lớp Player (căn giữa)
+# Lớp Player (giữ nguyên)
 class Player(pygame.sprite.Sprite):
     def __init__(self, grid_x, grid_y):
         super().__init__()
@@ -368,27 +370,40 @@ class Player(pygame.sprite.Sprite):
         pygame.draw.line(self.image, BLUE, (9, 16), (9, 20), 2)
         pygame.draw.line(self.image, BLUE, (11, 16), (11, 20), 2)
         self.rect = self.image.get_rect()
-        self.grid_pos = (grid_x, grid_y)
-        self.rect.center = to_pixel_pos(grid_x, grid_y)
-        self.speed = 1
+        self.grid_pos = [grid_x, grid_y]
+        self.pixel_pos = list(to_pixel_pos(grid_x, grid_y))
+        self.rect.center = self.pixel_pos
+        self.speed = 5
 
     def update(self):
         keys = pygame.key.get_pressed()
-        new_grid_x, new_grid_y = self.grid_pos
+        target_grid_x, target_grid_y = self.grid_pos[0], self.grid_pos[1]
         if keys[pygame.K_LEFT]:
-            new_grid_x -= self.speed
+            target_grid_x -= 1
         if keys[pygame.K_RIGHT]:
-            new_grid_x += self.speed
+            target_grid_x += 1
         if keys[pygame.K_UP]:
-            new_grid_y -= self.speed
+            target_grid_y -= 1
         if keys[pygame.K_DOWN]:
-            new_grid_y += self.speed
-        if (0 <= new_grid_x < GRID_WIDTH and 0 <= new_grid_y < GRID_HEIGHT and
-                grid[new_grid_y][new_grid_x] == 0):
-            self.grid_pos = (new_grid_x, new_grid_y)
-            self.rect.center = to_pixel_pos(new_grid_x, new_grid_y)
+            target_grid_y += 1
+        if (0 <= target_grid_x < GRID_WIDTH and 0 <= target_grid_y < GRID_HEIGHT and
+                grid[target_grid_y][target_grid_x] == 0):
+            target_pixel_pos = to_pixel_pos(target_grid_x, target_grid_y)
+            if self.pixel_pos[0] < target_pixel_pos[0]:
+                self.pixel_pos[0] += self.speed
+            elif self.pixel_pos[0] > target_pixel_pos[0]:
+                self.pixel_pos[0] -= self.speed
+            if self.pixel_pos[1] < target_pixel_pos[1]:
+                self.pixel_pos[1] += self.speed
+            elif self.pixel_pos[1] > target_pixel_pos[1]:
+                self.pixel_pos[1] -= self.speed
+            if abs(self.pixel_pos[0] - target_pixel_pos[0]) < self.speed and \
+               abs(self.pixel_pos[1] - target_pixel_pos[1]) < self.speed:
+                self.pixel_pos = list(target_pixel_pos)
+                self.grid_pos = [target_grid_x, target_grid_y]
+        self.rect.center = (int(self.pixel_pos[0]), int(self.pixel_pos[1]))
 
-# Lớp Enemy (căn giữa)
+# Lớp Enemy (sửa tốc độ và đảm bảo di chuyển)
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, grid_x, grid_y, player, algorithm, difficulty):
         super().__init__()
@@ -411,50 +426,62 @@ class Enemy(pygame.sprite.Sprite):
         self.algorithm = algorithm
         self.path = []
         self.move_timer = 0
+        # Điều chỉnh tốc độ: nhỏ hơn = nhanh hơn
         if difficulty == "Easy":
-            self.move_delay = 15
+            self.move_delay = 30  # ~0.5 giây/lần tại 60 FPS
         elif difficulty == "Medium":
-            self.move_delay = 10
+            self.move_delay = 15  # ~0.25 giây/lần, nhanh hơn Easy
         else:  # Hard
-            self.move_delay = 5
+            self.move_delay = 5   # ~0.083 giây/lần, nhanh nhất
 
     def update(self):
         self.move_timer += 1
         if self.move_timer >= self.move_delay:
             self.move_timer = 0
+            player_grid_pos = tuple(self.player.grid_pos)
             if self.algorithm == "BFS":
-                self.path = bfs_search(self.grid_pos, self.player.grid_pos)
+                self.path = bfs_search(self.grid_pos, player_grid_pos)
             elif self.algorithm == "DFS":
-                self.path = dfs_search(self.grid_pos, self.player.grid_pos)
+                self.path = dfs_search(self.grid_pos, player_grid_pos)
             elif self.algorithm == "A*":
-                self.path = a_star_search(self.grid_pos, self.player.grid_pos)
+                self.path = a_star_search(self.grid_pos, player_grid_pos)
             elif self.algorithm == "IDA*":
-                self.path = ida_star_search(self.grid_pos, self.player.grid_pos)
+                self.path = ida_star_search(self.grid_pos, player_grid_pos)
             elif self.algorithm == "GDFS":
-                self.path = greedy_best_first_search(self.grid_pos, self.player.grid_pos)
+                self.path = greedy_best_first_search(self.grid_pos, player_grid_pos)
             elif self.algorithm == "UCS":
-                self.path = ucs_search(self.grid_pos, self.player.grid_pos)
+                self.path = ucs_search(self.grid_pos, player_grid_pos)
+            # Nếu có đường đi, di chuyển
             if len(self.path) > 1:
                 next_pos = self.path[1]
                 self.grid_pos = next_pos
                 self.rect.center = to_pixel_pos(next_pos[0], next_pos[1])
+            # Nếu không tìm được đường, thử di chuyển ngẫu nhiên
+            elif len(self.path) == 0:
+                directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+                random.shuffle(directions)
+                for dx, dy in directions:
+                    next_pos = (self.grid_pos[0] + dx, self.grid_pos[1] + dy)
+                    x, y = next_pos
+                    if (0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT and grid[y][x] == 0):
+                        self.grid_pos = next_pos
+                        self.rect.center = to_pixel_pos(next_pos[0], next_pos[1])
+                        break
 
 # Tải hình nền
 try:
     background = pygame.image.load(r"asset\anh_backgound\anh8.jpg").convert()
-    background = pygame.transform.scale(background, (WINDOW_WIDTH, WINDOW_HEIGHT))
+    background = pygame.transform.smoothscale(background, (WINDOW_WIDTH, WINDOW_HEIGHT))  # Dùng smoothscale cho chất lượng tốt hơn
 except:
     background = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
     background.fill((50, 150, 50))
 
-# Tải hình nền lớn hơn cho mê cung
 try:
-    game_background = pygame.image.load(r"asset\anh_backgound\anh4.jpg"
-                                        r"").convert()
-    game_background = pygame.transform.scale(game_background, (WINDOW_WIDTH, WINDOW_HEIGHT))
+    game_background = pygame.image.load(r"asset\anh_backgound\anh4.jpg").convert()
+    game_background = pygame.transform.smoothscale(game_background, (WINDOW_WIDTH, WINDOW_HEIGHT))
 except:
     game_background = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
-    game_background.fill((100, 100, 100))  # Màu xám để phân biệt
+    game_background.fill((100, 100, 100))
 
 # Tải âm thanh
 try:
@@ -463,6 +490,8 @@ try:
     collision_sound = pygame.mixer.Sound("collision.wav")
 except:
     collision_sound = None
+
+# Menu, Game Over, HUD (giữ nguyên)
 
 # Menu chọn thuật toán, chế độ chơi và bản đồ (cập nhật kích thước)
 def menu_screen():
@@ -600,24 +629,29 @@ def game_over_screen(final_score):
                     return True
     return False
 
-# Vẽ bảng thông tin (HUD) (căn chỉnh lại)
+# Vẽ bảng thông tin (HUD) (đặt bên ngoài mê cung, bên phải)
 def draw_hud(score, algorithm, difficulty, map_name):
     hud_width = 220
     hud_height = 140
     hud = pygame.Surface((hud_width, hud_height))
     hud.fill(DARK_BLUE)
     hud.set_alpha(200)
-    screen.blit(hud, (MAZE_OFFSET_X + 10, MAZE_OFFSET_Y + 10))  # Đặt HUD trong mê cung
 
+    # Đặt HUD bên phải mê cung
+    hud_x = MAZE_OFFSET_X + MAZE_WIDTH + 20  # Cách mép phải mê cung 20 pixels
+    hud_y = MAZE_OFFSET_Y + 10  # Cùng độ cao với mép trên mê cung
+    screen.blit(hud, (hud_x, hud_y))
+
+    # Căn chỉnh văn bản bên trong HUD
     score_text = font.render(f"Score: {score}", True, WHITE)
     algo_text = font_small.render(f"Algorithm: {algorithm}", True, WHITE)
     diff_text = font_small.render(f"Difficulty: {difficulty}", True, WHITE)
     map_text = font_small.render(f"Map: {map_name}", True, WHITE)
 
-    screen.blit(score_text, (MAZE_OFFSET_X + 20, MAZE_OFFSET_Y + 20))
-    screen.blit(algo_text, (MAZE_OFFSET_X + 20, MAZE_OFFSET_Y + 50))
-    screen.blit(diff_text, (MAZE_OFFSET_X + 20, MAZE_OFFSET_Y + 80))
-    screen.blit(map_text, (MAZE_OFFSET_X + 20, MAZE_OFFSET_Y + 110))
+    screen.blit(score_text, (hud_x + 10, hud_y + 10))
+    screen.blit(algo_text, (hud_x + 10, hud_y + 40))
+    screen.blit(diff_text, (hud_x + 10, hud_y + 70))
+    screen.blit(map_text, (hud_x + 10, hud_y + 100))
 
 # Vòng lặp game chính
 running = True
@@ -646,7 +680,6 @@ while running:
 
     while game_active:
         clock.tick(FPS)
-
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 game_active = False
@@ -660,8 +693,8 @@ while running:
                 collision_sound.play()
             game_active = False
 
-        screen.blit(game_background, (0, 0))  # Vẽ hình nền lớn hơn
-        draw_grid()  # Vẽ mê cung ở giữa
+        screen.blit(game_background, (0, 0))
+        draw_grid()
         all_sprites.draw(screen)
         draw_hud(score, algorithm, difficulty, map_name)
         pygame.display.flip()
