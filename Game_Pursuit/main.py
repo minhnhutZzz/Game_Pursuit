@@ -56,21 +56,21 @@ MAPS = {
     "Me cung cuu cong chúa": [
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1],
+        [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1],
+        [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1],
+        [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1],
+        [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1],
+        [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1],
+        [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1],
+        [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1],
+        [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
@@ -483,10 +483,8 @@ except:
     game_background = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
     game_background.fill((100, 100, 100))
 
-# Tải âm thanh
+# Tải âm thanh (da tai trong giao dien)
 try:
-    pygame.mixer.music.load("background_music.mp3")
-    pygame.mixer.music.play(-1)
     collision_sound = pygame.mixer.Sound("collision.wav")
 except:
     collision_sound = None
@@ -495,6 +493,14 @@ except:
 
 # Menu chọn thuật toán, chế độ chơi và bản đồ (cập nhật kích thước)
 def menu_screen():
+    # Tải và phát nhạc cho menu
+    try:
+        pygame.mixer.music.stop()  # Dừng nhạc hiện tại (nếu có)
+        pygame.mixer.music.load(r"asset\nhac\nhac_giao_dien.mp3")
+        pygame.mixer.music.play(-1)  # Lặp vô hạn
+    except:
+        print("Không thể tải menu_music.mp3")
+
     algorithms = ["BFS", "DFS", "A*", "IDA*", "GDFS", "UCS"]
     difficulties = ["Easy", "Medium", "Hard"]
     maps = list(MAPS.keys())
@@ -596,6 +602,7 @@ def menu_screen():
 
 # Game Over (cập nhật kích thước)
 def game_over_screen(final_score):
+    pygame.mixer.music.stop()  # Dừng nhạc gameplay
     screen.blit(background, (0, 0))
     overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
     overlay.fill(DARK_BLUE)
@@ -659,6 +666,14 @@ while running:
     algorithm, difficulty, map_name = menu_screen()
     if algorithm is None:
         break
+
+    # Tải và phát nhạc cho gameplay
+    try:
+        pygame.mixer.music.stop()  # Dừng nhạc menu
+        pygame.mixer.music.load(r"asset\nhac\nhac_choi_game.mp3")
+        pygame.mixer.music.play(-1)  # Lặp vô hạn
+    except:
+        print("Không thể tải gameplay_music.mp3")
 
     load_map(map_name)
     all_sprites = pygame.sprite.Group()
