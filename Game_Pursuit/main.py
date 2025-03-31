@@ -145,8 +145,20 @@ def draw_grid(exit_pos=None):
                 pygame.draw.rect(screen, GRAY, rect)
                 pygame.draw.rect(screen, DARK_GRAY, rect, 2)
             elif grid[y][x] == 2:  # Lối ra
-                pygame.draw.rect(screen, YELLOW, rect)  # Màu vàng cho lối ra
+                pygame.draw.rect(screen, YELLOW, rect)
                 pygame.draw.rect(screen, BLACK, rect, 2)
+            elif grid[y][x] == 3:  # Tăng tốc (Speed Boost)
+                pygame.draw.rect(screen, LIGHT_GREEN, rect)
+                screen.blit(speed_boost_img, (rect.x + 2.5, rect.y + 2.5))
+            elif grid[y][x] == 4:  # Làm chậm (Slow Enemy)
+                pygame.draw.rect(screen, LIGHT_GREEN, rect)
+                screen.blit(slow_enemy_img, (rect.x + 2.5, rect.y + 2.5))
+            elif grid[y][x] == 5:  # Tàng hình (Invisibility)
+                pygame.draw.rect(screen, LIGHT_GREEN, rect)
+                screen.blit(invisibility_img, (rect.x + 2.5, rect.y + 2.5))
+            elif grid[y][x] == 6:  # Gai (Spikes)
+                pygame.draw.rect(screen, LIGHT_GREEN, rect)  # Nền
+                screen.blit(spike_img, (rect.x + 2.5, rect.y + 2.5))  # Hiển thị hình ảnh gai
             else:
                 pygame.draw.rect(screen, LIGHT_GREEN, rect)
             pygame.draw.rect(screen, BLACK, rect, 1)
@@ -166,6 +178,37 @@ def to_grid_pos(x, y):
 
 def to_pixel_pos(grid_x, grid_y):
     return (MAZE_OFFSET_X + grid_x * GRID_SIZE + GRID_SIZE // 2, MAZE_OFFSET_Y + grid_y * GRID_SIZE + GRID_SIZE // 2)
+
+# sinh vật phẩm ngẫu nhiên
+def spawn_items(grid, player_pos, enemy_pos, exit_pos, num_items=3, num_spikes=2):
+    """
+    Sinh ngẫu nhiên các vật phẩm và gai trên bản đồ.
+    - num_items: Số lượng vật phẩm (Speed Boost, Slow Enemy, Invisibility).
+    - num_spikes: Số lượng gai.
+    """
+    item_types = [3, 4, 5]  # 3: Speed Boost, 4: Slow Enemy, 5: Invisibility
+    placed_items = 0
+    placed_spikes = 0
+
+    # Sinh vật phẩm
+    while placed_items < num_items:
+        x = random.randint(0, GRID_WIDTH - 1)
+        y = random.randint(0, GRID_HEIGHT - 1)
+        pos = (x, y)
+        if (grid[y][x] == 0 and pos != player_pos and pos != enemy_pos and pos != exit_pos):
+            item_type = random.choice(item_types)
+            grid[y][x] = item_type
+            placed_items += 1
+
+    # Sinh gai
+    while placed_spikes < num_spikes:
+        x = random.randint(0, GRID_WIDTH - 1)
+        y = random.randint(0, GRID_HEIGHT - 1)
+        pos = (x, y)
+        if (grid[y][x] == 0 and pos != player_pos and pos != enemy_pos and pos != exit_pos):
+            grid[y][x] = 6  # Gai
+            placed_spikes += 1
+
 
 # Các hàm thuật toán
 # Heuristic cho các thuật toán có thông tin
@@ -311,7 +354,6 @@ def ida_star_search(start, goal):
             return []
         threshold = new_threshold
 
-# Lớp Player (giữ nguyên)
 class Player(pygame.sprite.Sprite):
     def __init__(self, grid_x, grid_y):
         super().__init__()
@@ -329,8 +371,54 @@ class Player(pygame.sprite.Sprite):
         self.pixel_pos = list(to_pixel_pos(grid_x, grid_y))
         self.rect.center = self.pixel_pos
         self.speed = 5
+        self.default_speed = 5
+        self.speed_boost_timer = 0
+        self.slow_timer = 0  # Thời gian bị làm chậm bởi gai
+        self.health = 100  # Máu tối đa
+        self.max_health = 100
+        self.health_cooldown = 0  # Thời gian hồi để không bị trừ máu liên tục
+        self.original_image = self.image.copy()
+        self.blink_timer = 0
+
+    def activate_speed_boost(self):
+        self.speed = 8
+        self.speed_boost_timer = 10 * FPS
+
+    def hit_spike(self):
+        if self.health_cooldown <= 0:  # Chỉ trừ máu nếu không trong thời gian hồi
+            self.health -= 10  # Trừ 20 máu khi chạm gai
+            self.speed = 3  # Làm chậm
+            self.slow_timer = 5 * FPS  # Làm chậm trong 5 giây
+            self.health_cooldown = 1 * FPS  # Hồi 1 giây trước khi bị trừ máu tiếp
+            self.blink_timer = 1 * FPS
+            if spike_sound:
+                spike_sound.play()
+            if self.health < 0:
+                self.health = 0
 
     def update(self):
+        if self.speed_boost_timer > 0:
+            self.speed_boost_timer -= 1
+            if self.speed_boost_timer <= 0:
+                self.speed = self.default_speed
+
+        if self.slow_timer > 0:
+            self.slow_timer -= 1
+            if self.slow_timer <= 0:
+                self.speed = self.default_speed
+
+        if self.health_cooldown > 0:
+            self.health_cooldown -= 1
+
+        if self.blink_timer > 0:
+            self.blink_timer -= 1
+            if self.blink_timer % 10 < 5:  # Nhấp nháy
+                self.image.set_alpha(128)
+            else:
+                self.image.set_alpha(255)
+        else:
+            self.image.set_alpha(255)
+
         keys = pygame.key.get_pressed()
         target_grid_x, target_grid_y = self.grid_pos[0], self.grid_pos[1]
         if keys[pygame.K_LEFT]:
@@ -342,7 +430,7 @@ class Player(pygame.sprite.Sprite):
         if keys[pygame.K_DOWN]:
             target_grid_y += 1
         if (0 <= target_grid_x < GRID_WIDTH and 0 <= target_grid_y < GRID_HEIGHT and
-                grid[target_grid_y][target_grid_x] !=1):
+                grid[target_grid_y][target_grid_x] != 1):
             target_pixel_pos = to_pixel_pos(target_grid_x, target_grid_y)
             if self.pixel_pos[0] < target_pixel_pos[0]:
                 self.pixel_pos[0] += self.speed
@@ -358,7 +446,8 @@ class Player(pygame.sprite.Sprite):
                 self.grid_pos = [target_grid_x, target_grid_y]
         self.rect.center = (int(self.pixel_pos[0]), int(self.pixel_pos[1]))
 
-# Lớp Enemy (sửa tốc độ và đảm bảo di chuyển)
+
+
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, grid_x, grid_y, player, algorithm, difficulty):
         super().__init__()
@@ -385,39 +474,71 @@ class Enemy(pygame.sprite.Sprite):
             self.move_delay = 30
         elif difficulty == "Medium":
             self.move_delay = 15
-        else:  # Hard
+        else:
             self.move_delay = 5
+        self.default_move_delay = self.move_delay
+        self.slow_timer = 0
+        self.invisibility_timer = 0
+
+    def activate_slow(self):
+        self.move_delay = self.default_move_delay * 2  # Làm chậm
+        self.slow_timer = 10 * FPS  # 10 giây
+
+    def activate_invisibility(self):
+        self.invisibility_timer = 5 * FPS  # 5 giây
 
     def update(self):
+        if self.slow_timer > 0:
+            self.slow_timer -= 1
+            if self.slow_timer <= 0:
+                self.move_delay = self.default_move_delay
+
+        if self.invisibility_timer > 0:
+            self.invisibility_timer -= 1
+
         self.move_timer += 1
         if self.move_timer >= self.move_delay:
             self.move_timer = 0
-            player_grid_pos = tuple(self.player.grid_pos)
-            if self.algorithm == "BFS":
-                self.path = bfs_search(self.grid_pos, player_grid_pos)
-            elif self.algorithm == "IDS":
-                self.path = ids_search(self.grid_pos, player_grid_pos)
-            elif self.algorithm == "A*":
-                self.path = a_star_search(self.grid_pos, player_grid_pos)
-            elif self.algorithm == "IDA*":
-                self.path = ida_star_search(self.grid_pos, player_grid_pos)
-            # Logic di chuyển giữ nguyên
-            if len(self.path) > 1:
-                next_pos = self.path[1]
-                self.grid_pos = next_pos
-                self.rect.center = to_pixel_pos(next_pos[0], next_pos[1])
-            elif len(self.path) == 0:
+            if self.invisibility_timer > 0:
+                # Di chuyển ngẫu nhiên khi người chơi tàng hình
                 directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
                 random.shuffle(directions)
                 for dx, dy in directions:
                     next_pos = (self.grid_pos[0] + dx, self.grid_pos[1] + dy)
                     x, y = next_pos
-                    if (0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT and grid[y][x] !=1):
+                    if (0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT and grid[y][x] != 1):
                         self.grid_pos = next_pos
                         self.rect.center = to_pixel_pos(next_pos[0], next_pos[1])
                         break
+            else:
+                player_grid_pos = tuple(self.player.grid_pos)
+                if self.algorithm == "BFS":
+                    self.path = bfs_search(self.grid_pos, player_grid_pos)
+                elif self.algorithm == "IDS":
+                    self.path = ids_search(self.grid_pos, player_grid_pos)
+                elif self.algorithm == "A*":
+                    self.path = a_star_search(self.grid_pos, player_grid_pos)
+                elif self.algorithm == "IDA*":
+                    self.path = ida_star_search(self.grid_pos, player_grid_pos)
+                if len(self.path) > 1:
+                    next_pos = self.path[1]
+                    self.grid_pos = next_pos
+                    self.rect.center = to_pixel_pos(next_pos[0], next_pos[1])
+                elif len(self.path) == 0:
+                    directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+                    random.shuffle(directions)
+                    for dx, dy in directions:
+                        next_pos = (self.grid_pos[0] + dx, self.grid_pos[1] + dy)
+                        x, y = next_pos
+                        if (0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT and grid[y][x] != 1):
+                            self.grid_pos = next_pos
+                            self.rect.center = to_pixel_pos(next_pos[0], next_pos[1])
+                            break
 
-# Tải hình nền
+
+
+
+# Tải hình nền bắt đầu game
 try:
     background = pygame.image.load(r"asset\anh_backgound\anh8.jpg").convert()
     background = pygame.transform.smoothscale(background, (WINDOW_WIDTH, WINDOW_HEIGHT))  # Dùng smoothscale cho chất lượng tốt hơn
@@ -425,6 +546,7 @@ except:
     background = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
     background.fill((50, 150, 50))
 
+# Tải hình nền kết thúc game
 try:
     background2 = pygame.image.load(r"asset\anh_backgound\anhdep.jpg").convert()
     background2 = pygame.transform.smoothscale(background2, (WINDOW_WIDTH, WINDOW_HEIGHT))  # Dùng smoothscale cho chất lượng tốt hơn
@@ -432,18 +554,67 @@ except:
     background2 = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
     background2.fill((50, 150, 50))
 
-
-
-
-
-
-# Tải âm thanh (da tai trong giao dien)
+# tải ảnh vật phẩm
 try:
-    collision_sound = pygame.mixer.Sound("collision.wav")
+    speed_boost_img = pygame.image.load(r"asset\anh_icon\Giay.jpg").convert_alpha()# giay tang toc
+    speed_boost_img = pygame.transform.scale(speed_boost_img, (GRID_SIZE - 5, GRID_SIZE - 5))  # Thu nhỏ để vừa ô
+    slow_enemy_img = pygame.image.load(r"asset\anh_icon\lonuoc2.png").convert_alpha() # lo nuoc lam cham quai vat
+    slow_enemy_img = pygame.transform.scale(slow_enemy_img, (GRID_SIZE - 5, GRID_SIZE - 5))
+    invisibility_img = pygame.image.load(r"asset\anh_icon\aochoang1.png").convert_alpha() # ao choang tang hinh
+    invisibility_img = pygame.transform.scale(invisibility_img, (GRID_SIZE - 5, GRID_SIZE - 5))
+except pygame.error as e:
+    print(f"Không thể tải hình ảnh vật phẩm: {e}")
+    # Dùng hình mặc định nếu không tải được
+    speed_boost_img = pygame.Surface((GRID_SIZE - 5, GRID_SIZE - 5), pygame.SRCALPHA)
+    speed_boost_img.fill(BLUE)
+    slow_enemy_img = pygame.Surface((GRID_SIZE - 5, GRID_SIZE - 5), pygame.SRCALPHA)
+    slow_enemy_img.fill(WHITE)
+    invisibility_img = pygame.Surface((GRID_SIZE - 5, GRID_SIZE - 5), pygame.SRCALPHA)
+    invisibility_img.fill((128, 0, 128))
+
+# Tải hình ảnh gai
+try:
+    spike_img = pygame.image.load(r"asset\anh_icon\bay.png").convert_alpha()
+    spike_img = pygame.transform.scale(spike_img, (GRID_SIZE - 5, GRID_SIZE - 5))  # Thu nhỏ để vừa ô (25x25)
+except Exception as e:
+    print(f"Không thể tải hình ảnh gai: {e}")
+    # Nếu không tải được, dùng hình mặc định (vẽ thủ công)
+    spike_img = pygame.Surface((GRID_SIZE - 5, GRID_SIZE - 5), pygame.SRCALPHA)
+    pygame.draw.circle(spike_img, RED, (12.5, 12.5), 8)
+    for angle in range(0, 360, 45):
+        rad = math.radians(angle)
+        x1, y1 = 12.5, 12.5
+        x2 = x1 + math.cos(rad) * 12
+        y2 = y1 + math.sin(rad) * 12
+        pygame.draw.line(spike_img, RED, (x1, y1), (x2, y2), 2)
+
+# tai am thanh nhat vat pham
+try:
+    pickup_sound = pygame.mixer.Sound(r"asset\nhac\nhac_nhat_do.mp3")
+except Exception as e:
+    print(f"Không thể tải âm thanh: {e}")
+    pickup_sound = None
+
+# tai am thanh cham gai
+try:
+    spike_sound = pygame.mixer.Sound(r"asset\nhac\nhac_dinh_bay.mp3")
+except:
+    spike_sound = None
+
+# Tải âm thanh dung game
+try:
+    collision_sound = pygame.mixer.Sound(r"asset\nhac\nhac_thua_cuoc.mp3")
 except:
     collision_sound = None
 
-# Menu, Game Over, HUD (giữ nguyên)
+# tai am thanh chien thang
+try:
+    victory_sound = pygame.mixer.Sound(r"asset\nhac\nhac_chien_thang.mp3")
+except Exception as e:
+    print(f"Không thể tải âm thanh: {e}")
+    victory_sound = None
+
+
 
 # Menu chọn thuật toán, chế độ chơi và bản đồ (cập nhật kích thước)
 def menu_screen():
@@ -469,7 +640,7 @@ def menu_screen():
         screen.blit(background, (0, 0))
         overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
         #overlay.fill(DARK_BLUE)
-        overlay.set_alpha(120)
+        overlay.set_alpha(200)
         screen.blit(overlay, (0, 0))
 
         # Tiêu đề game
@@ -576,7 +747,7 @@ def game_over_screen(final_score):
     for text, rect in [(game_over_text, game_over_rect), (score_text, score_rect), (replay_text, replay_rect)]:
         bg = pygame.Surface((rect.width + 20, rect.height + 10))
         bg.fill(BLACK)
-        bg.set_alpha(150)
+        bg.set_alpha(100)
         screen.blit(bg, (rect.x - 10, rect.y - 5))
         screen.blit(text, rect)
 
@@ -593,7 +764,10 @@ def game_over_screen(final_score):
     return False
 
 def victory_screen(final_score):
-    pygame.mixer.music.stop()
+    pygame.mixer.music.stop()  # Dừng nhạc nền
+    if victory_sound:  # Phát âm thanh chiến thắng
+        victory_sound.play()
+
     screen.blit(background2, (0, 0))
     overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
     overlay.fill(DARK_BLUE)
@@ -627,30 +801,38 @@ def victory_screen(final_score):
                     return True
     return False
 
+
 # Vẽ bảng thông tin (HUD) (đặt bên ngoài mê cung, bên phải)
-def draw_hud(score, algorithm, difficulty, map_name):
+def draw_hud(score, algorithm, difficulty, map_name, player):
     hud_width = 220
-    hud_height = 140
+    hud_height = 180  # Tăng chiều cao để chứa thanh máu
     hud = pygame.Surface((hud_width, hud_height))
     hud.fill(DARK_BLUE)
     hud.set_alpha(200)
 
-    # Đặt HUD bên phải mê cung
-    hud_x = MAZE_OFFSET_X + MAZE_WIDTH + 20  # Cách mép phải mê cung 20 pixels
-    hud_y = MAZE_OFFSET_Y + 10  # Cùng độ cao với mép trên mê cung
+    hud_x = MAZE_OFFSET_X + MAZE_WIDTH + 20
+    hud_y = MAZE_OFFSET_Y + 10
     screen.blit(hud, (hud_x, hud_y))
 
-    # Căn chỉnh văn bản bên trong HUD
     score_text = font.render(f"Score: {score}", True, WHITE)
     algo_text = font_small.render(f"Algorithm: {algorithm}", True, WHITE)
     diff_text = font_small.render(f"Difficulty: {difficulty}", True, WHITE)
     map_text = font_small.render(f"Map: {map_name}", True, WHITE)
+    health_text = font_small.render(f"Health: {player.health}", True, WHITE)
 
     screen.blit(score_text, (hud_x + 10, hud_y + 10))
     screen.blit(algo_text, (hud_x + 10, hud_y + 40))
     screen.blit(diff_text, (hud_x + 10, hud_y + 70))
     screen.blit(map_text, (hud_x + 10, hud_y + 100))
+    screen.blit(health_text, (hud_x + 10, hud_y + 130))
 
+    # Vẽ thanh máu
+    health_bar_width = 150
+    health_bar_height = 10
+    health_ratio = player.health / player.max_health
+    pygame.draw.rect(screen, RED, (hud_x + 10, hud_y + 150, health_bar_width, health_bar_height))  # Nền thanh máu
+    pygame.draw.rect(screen, (0, 255, 0), (hud_x + 10, hud_y + 150, health_bar_width * health_ratio, health_bar_height))  # Thanh máu
+    pygame.draw.rect(screen, BLACK, (hud_x + 10, hud_y + 150, health_bar_width, health_bar_height), 2)  # Viền
 
 
 MAP_BACKGROUNDS = {
@@ -660,9 +842,10 @@ MAP_BACKGROUNDS = {
 }
 
 # Vòng lặp game chính
+# Vòng lặp game chính
 running = True
 while running:
-    algorithm, difficulty = menu_screen()  # Chỉ nhận 2 giá trị
+    algorithm, difficulty = menu_screen()
     if algorithm is None:
         break
 
@@ -673,41 +856,41 @@ while running:
     except:
         print("Không thể tải gameplay_music.mp3")
 
-    # Danh sách bản đồ theo thứ tự chơi
     map_order = ["Me cung", "Can ho", "Khach san"]
-    current_map_idx = 0  # Luôn bắt đầu từ bản đồ đầu tiên
+    current_map_idx = 0
 
     score = 0
     game_active = True
 
     while game_active and current_map_idx < len(map_order):
-        # Tải bản đồ hiện tại
+        # Tải bản đồ
         load_map(map_order[current_map_idx])
+
+        # Tải hình nền tương ứng với bản đồ
+        try:
+            game_background = pygame.image.load(MAP_BACKGROUNDS[map_order[current_map_idx]]).convert()
+            game_background = pygame.transform.scale(game_background, (WINDOW_WIDTH, WINDOW_HEIGHT))
+        except Exception as e:
+            print(f"Không thể tải hình nền cho {map_order[current_map_idx]}: {e}")
+            game_background = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+            game_background.fill(DARK_BLUE)  # Hình nền mặc định nếu lỗi
+
         all_sprites = pygame.sprite.Group()
         enemies = pygame.sprite.Group()
 
-        # Đặt vị trí Player và Enemy
         player_pos = get_empty_position()
         player = Player(player_pos[0], player_pos[1])
 
         enemy_pos = get_empty_position()
-        while enemy_pos == player_pos or grid[enemy_pos[1]][enemy_pos[0]] == 2:
+        while enemy_pos == player_pos:
             enemy_pos = get_empty_position()
         enemy = Enemy(enemy_pos[0], enemy_pos[1], player, algorithm, difficulty)
 
         all_sprites.add(player, enemy)
         enemies.add(enemy)
 
-        # Tìm vị trí lối ra
         exit_pos = get_exit_position()
-
-        # Tải hình nền cho bản đồ hiện tại
-        try:
-            game_background = pygame.image.load(MAP_BACKGROUNDS[map_order[current_map_idx]]).convert()
-            game_background = pygame.transform.smoothscale(game_background, (WINDOW_WIDTH, WINDOW_HEIGHT))
-        except:
-            game_background = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
-            game_background.fill((100, 100, 100))
+        spawn_items(grid, player_pos, enemy_pos, exit_pos, num_items=3, num_spikes=2)
 
         while game_active:
             clock.tick(FPS)
@@ -715,39 +898,56 @@ while running:
                 if event.type == pygame.QUIT:
                     game_active = False
                     running = False
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:  # Thoát bằng phím ESC
-                        game_active = False
-                        running = False
 
             all_sprites.update()
             score += 1
 
-            # Kiểm tra va chạm với Enemy
             if pygame.sprite.spritecollide(player, enemies, False):
                 if collision_sound:
                     collision_sound.play()
                 game_active = False
 
-            # Kiểm tra đến lối ra
             if tuple(player.grid_pos) == exit_pos:
                 current_map_idx += 1
                 if current_map_idx >= len(map_order):
-                    # Người chơi thắng
                     replay = victory_screen(score)
                     if not replay:
                         running = False
                     game_active = False
-                break  # Chuyển sang bản đồ tiếp theo
+                break
+
+            player_grid_x, player_grid_y = player.grid_pos
+            item = grid[player_grid_y][player_grid_x]
+            if item in [3, 4, 5, 6]:
+                if item == 3:
+                    player.activate_speed_boost()
+                    if pickup_sound:
+                        pickup_sound.play()
+                elif item == 4:
+                    enemy.activate_slow()
+                    if pickup_sound:
+                        pickup_sound.play()
+                elif item == 5:
+                    enemy.activate_invisibility()
+                    if pickup_sound:
+                        pickup_sound.play()
+                elif item == 6:
+                    player.hit_spike()
+                if item != 6:
+                    grid[player_grid_y][player_grid_x] = 0
+
+            if player.health <= 0:
+                if collision_sound:
+                    collision_sound.play()
+                game_active = False
 
             screen.blit(game_background, (0, 0))
             draw_grid(exit_pos)
             all_sprites.draw(screen)
-            draw_hud(score, algorithm, difficulty, map_order[current_map_idx])
+            draw_hud(score, algorithm, difficulty, map_order[current_map_idx], player)
             pygame.display.flip()
 
     if running and not game_active and current_map_idx < len(map_order):
-        # Thua game
         replay = game_over_screen(score)
         if not replay:
             running = False
