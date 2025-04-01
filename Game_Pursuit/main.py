@@ -120,6 +120,7 @@ MAPS = {
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1],
     ]
 
+
 }
 
 # Tải bản đồ
@@ -386,7 +387,7 @@ class Player(pygame.sprite.Sprite):
 
     def hit_spike(self):
         if self.health_cooldown <= 0:  # Chỉ trừ máu nếu không trong thời gian hồi
-            self.health -= 10  # Trừ 20 máu khi chạm gai
+            self.health -= 20  # Trừ 20 máu khi chạm gai
             self.speed = 3  # Làm chậm
             self.slow_timer = 5 * FPS  # Làm chậm trong 5 giây
             self.health_cooldown = 1 * FPS  # Hồi 1 giây trước khi bị trừ máu tiếp
@@ -798,6 +799,7 @@ def victory_screen(final_score):
                 return False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:
+                    victory_sound.stop()
                     return True
     return False
 
@@ -890,7 +892,7 @@ while running:
         enemies.add(enemy)
 
         exit_pos = get_exit_position()
-        spawn_items(grid, player_pos, enemy_pos, exit_pos, num_items=3, num_spikes=2)
+        spawn_items(grid, player_pos, enemy_pos, exit_pos, num_items=3, num_spikes=5)
 
         while game_active:
             clock.tick(FPS)
