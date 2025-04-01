@@ -53,6 +53,7 @@ grid = [[0 for _ in range(GRID_WIDTH)] for _ in range(GRID_HEIGHT)]
 
 # Định nghĩa các bản đồ (giữ nguyên)
 MAPS = {
+    # Stage 1 (Độ khó thấp - bản đồ hiện có)
     "Me cung": [
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -118,8 +119,143 @@ MAPS = {
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1],
-    ]
+    ],
 
+    # Stage 2 (Độ khó trung bình)
+    "Rung sau": [
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+        [1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1],
+        [1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1],
+        [1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1],
+        [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1],
+        [1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1],
+        [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+        [1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1],
+        [1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1],
+        [1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1],
+        [1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1],
+        [1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+        [1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1],
+        [1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1],
+    ],
+    "Nha may": [
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1],
+        [1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1],
+        [1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1],
+        [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1],
+        [1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1],
+        [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1],
+        [1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1],
+        [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1],
+        [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1],
+        [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1],
+        [1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1],
+        [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1],
+        [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+        [1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1],
+    ],
+    "Thanh pho": [
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1],
+        [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1],
+        [1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1],
+        [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+        [1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1],
+        [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1],
+        [1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1],
+        [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1],
+        [1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1],
+        [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1],
+        [1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1],
+        [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1],
+        [1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1],
+        [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+        [1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1],
+        [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1],
+    ],
+
+    # Stage 3 (Độ khó cao)
+    "Hang dong": [
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1],
+        [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1],
+        [1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1],
+        [1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1],
+        [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1],
+        [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1],
+        [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1],
+        [1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1],
+        [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1],
+        [1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1],
+        [1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1],
+        [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1],
+        [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1],
+    ],
+    "Cau truc": [
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1],
+        [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1],
+        [1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1],
+        [1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1],
+        [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1],
+        [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1],
+        [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1],
+        [1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1],
+        [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1],
+        [1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1],
+        [1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1],
+        [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1],
+        [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1],
+    ],
+    "La ma": [
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1],
+        [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1],
+        [1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1],
+        [1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1],
+        [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1],
+        [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1],
+        [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1],
+        [1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1],
+        [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1],
+        [1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1],
+        [1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1],
+        [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1],
+        [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1],
+    ]
 }
 
 # Tải bản đồ
@@ -834,14 +970,61 @@ def draw_hud(score, algorithm, difficulty, map_name, player):
     pygame.draw.rect(screen, (0, 255, 0), (hud_x + 10, hud_y + 150, health_bar_width * health_ratio, health_bar_height))  # Thanh máu
     pygame.draw.rect(screen, BLACK, (hud_x + 10, hud_y + 150, health_bar_width, health_bar_height), 2)  # Viền
 
+def stage_transition_screen(completed_stage, next_stage, score):
+    screen.blit(background2, (0, 0))  # Dùng hình nền chiến thắng
+    overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+    overlay.fill(DARK_BLUE)
+    overlay.set_alpha(100)
+    screen.blit(overlay, (0, 0))
+
+    completed_text = font_large.render(f"Stage {completed_stage} Completed!", True, YELLOW)
+    next_text = font.render(f"Next: Stage {next_stage}", True, WHITE)
+    score_text = font.render(f"Score: {score}", True, WHITE)
+    continue_text = font_small.render("Press ENTER to Continue", True, WHITE)
+
+    completed_rect = completed_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 3))
+    next_rect = next_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 - 20))
+    score_rect = score_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + 20))
+    continue_rect = continue_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT * 2 // 3))
+
+    for text, rect in [(completed_text, completed_rect), (next_text, next_rect),
+                       (score_text, score_rect), (continue_text, continue_rect)]:
+        bg = pygame.Surface((rect.width + 20, rect.height + 10))
+        bg.fill(BLACK)
+        bg.set_alpha(150)
+        screen.blit(bg, (rect.x - 10, rect.y - 5))
+        screen.blit(text, rect)
+
+    pygame.display.flip()
+
+    waiting = True
+    while waiting:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    return True
+    return False
 
 MAP_BACKGROUNDS = {
     "Me cung": r"asset\anh_backgound\anh.webp",
     "Can ho": r"asset\anh_backgound\anh4.jpg",
     "Khach san": r"asset\anh_backgound\anhgame3.png",
+    "Rung sau": r"asset\anh_backgound\rung_sau.jpg",  # Thêm hình nền mới
+    "Nha may": r"asset\anh_backgound\nha_may.jpg",
+    "Thanh pho": r"asset\anh_backgound\thanh_pho.jpg",
+    "Hang dong": r"asset\anh_backgound\hang_dong.jpg",
+    "Cau truc": r"asset\anh_backgound\cau_truc.jpg",
+    "La ma": r"asset\anh_backgound\la_ma.jpg",
 }
+## Định nghĩa các màn chơi
+STAGES = [
+    ["Me cung", "Can ho", "Khach san"],  # Stage 1
+    ["Rung sau", "Nha may", "Thanh pho"],  # Stage 2
+    ["Hang dong", "Cau truc", "La ma"],   # Stage 3
+]
 
-# Vòng lặp game chính
 # Vòng lặp game chính
 running = True
 while running:
@@ -856,100 +1039,116 @@ while running:
     except:
         print("Không thể tải gameplay_music.mp3")
 
-    map_order = ["Me cung", "Can ho", "Khach san"]
-    current_map_idx = 0
-
     score = 0
+    current_stage = 0
     game_active = True
 
-    while game_active and current_map_idx < len(map_order):
-        # Tải bản đồ
-        load_map(map_order[current_map_idx])
+    while game_active and current_stage < len(STAGES):
+        current_map_idx = 0
+        map_order = STAGES[current_stage]
 
-        # Tải hình nền tương ứng với bản đồ
-        try:
-            game_background = pygame.image.load(MAP_BACKGROUNDS[map_order[current_map_idx]]).convert()
-            game_background = pygame.transform.scale(game_background, (WINDOW_WIDTH, WINDOW_HEIGHT))
-        except Exception as e:
-            print(f"Không thể tải hình nền cho {map_order[current_map_idx]}: {e}")
-            game_background = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
-            game_background.fill(DARK_BLUE)  # Hình nền mặc định nếu lỗi
+        while game_active and current_map_idx < len(map_order):
+            # Tải bản đồ
+            load_map(map_order[current_map_idx])
 
-        all_sprites = pygame.sprite.Group()
-        enemies = pygame.sprite.Group()
+            # Tải hình nền tương ứng với bản đồ
+            try:
+                game_background = pygame.image.load(MAP_BACKGROUNDS[map_order[current_map_idx]]).convert()
+                game_background = pygame.transform.scale(game_background, (WINDOW_WIDTH, WINDOW_HEIGHT))
+            except Exception as e:
+                print(f"Không thể tải hình nền cho {map_order[current_map_idx]}: {e}")
+                game_background = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+                game_background.fill(DARK_BLUE)
 
-        player_pos = get_empty_position()
-        player = Player(player_pos[0], player_pos[1])
+            all_sprites = pygame.sprite.Group()
+            enemies = pygame.sprite.Group()
 
-        enemy_pos = get_empty_position()
-        while enemy_pos == player_pos:
+            player_pos = get_empty_position()
+            player = Player(player_pos[0], player_pos[1])
+
             enemy_pos = get_empty_position()
-        enemy = Enemy(enemy_pos[0], enemy_pos[1], player, algorithm, difficulty)
+            while enemy_pos == player_pos:
+                enemy_pos = get_empty_position()
+            enemy = Enemy(enemy_pos[0], enemy_pos[1], player, algorithm, difficulty)
 
-        all_sprites.add(player, enemy)
-        enemies.add(enemy)
+            all_sprites.add(player, enemy)
+            enemies.add(enemy)
 
-        exit_pos = get_exit_position()
-        spawn_items(grid, player_pos, enemy_pos, exit_pos, num_items=3, num_spikes=2)
+            exit_pos = get_exit_position()
 
-        while game_active:
-            clock.tick(FPS)
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    game_active = False
-                    running = False
+            # Điều chỉnh số lượng vật phẩm và gai theo độ khó của màn
+            num_items = max(3 - current_stage, 1)  # Giảm vật phẩm khi màn tăng
+            num_spikes = 2 + current_stage  # Tăng gai khi màn tăng
+            spawn_items(grid, player_pos, enemy_pos, exit_pos, num_items=num_items, num_spikes=num_spikes)
 
-            all_sprites.update()
-            score += 1
-
-            if pygame.sprite.spritecollide(player, enemies, False):
-                if collision_sound:
-                    collision_sound.play()
-                game_active = False
-
-            if tuple(player.grid_pos) == exit_pos:
-                current_map_idx += 1
-                if current_map_idx >= len(map_order):
-                    replay = victory_screen(score)
-                    if not replay:
+            while game_active:
+                clock.tick(FPS)
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        game_active = False
                         running = False
+
+                all_sprites.update()
+                score += 1
+
+                if pygame.sprite.spritecollide(player, enemies, False):
+                    if collision_sound:
+                        collision_sound.play()
                     game_active = False
-                break
 
-            player_grid_x, player_grid_y = player.grid_pos
-            item = grid[player_grid_y][player_grid_x]
-            if item in [3, 4, 5, 6]:
-                if item == 3:
-                    player.activate_speed_boost()
-                    if pickup_sound:
-                        pickup_sound.play()
-                elif item == 4:
-                    enemy.activate_slow()
-                    if pickup_sound:
-                        pickup_sound.play()
-                elif item == 5:
-                    enemy.activate_invisibility()
-                    if pickup_sound:
-                        pickup_sound.play()
-                elif item == 6:
-                    player.hit_spike()
-                if item != 6:
-                    grid[player_grid_y][player_grid_x] = 0
+                if tuple(player.grid_pos) == exit_pos:
+                    current_map_idx += 1
+                    if current_map_idx >= len(map_order):
+                        if current_stage + 1 < len(STAGES):
+                            # Hiển thị giao diện chuyển màn
+                            continue_game = stage_transition_screen(current_stage + 1, current_stage + 2, score)
+                            if not continue_game:
+                                running = False
+                                game_active = False
+                            current_stage += 1
+                        else:
+                            # Đã hoàn thành tất cả các stage
+                            replay = victory_screen(score)
+                            if not replay:
+                                running = False
+                            game_active = False
+                    break
 
-            if player.health <= 0:
-                if collision_sound:
-                    collision_sound.play()
-                game_active = False
+                player_grid_x, player_grid_y = player.grid_pos
+                item = grid[player_grid_y][player_grid_x]
+                if item in [3, 4, 5, 6]:
+                    if item == 3:
+                        player.activate_speed_boost()
+                        if pickup_sound:
+                            pickup_sound.play()
+                    elif item == 4:
+                        enemy.activate_slow()
+                        if pickup_sound:
+                            pickup_sound.play()
+                    elif item == 5:
+                        enemy.activate_invisibility()
+                        if pickup_sound:
+                            pickup_sound.play()
+                    elif item == 6:
+                        player.hit_spike()
+                    if item != 6:
+                        grid[player_grid_y][player_grid_x] = 0
 
-            screen.blit(game_background, (0, 0))
-            draw_grid(exit_pos)
-            all_sprites.draw(screen)
-            draw_hud(score, algorithm, difficulty, map_order[current_map_idx], player)
-            pygame.display.flip()
+                if player.health <= 0:
+                    if collision_sound:
+                        collision_sound.play()
+                    game_active = False
 
-    if running and not game_active and current_map_idx < len(map_order):
-        replay = game_over_screen(score)
-        if not replay:
-            running = False
+                screen.blit(game_background, (0, 0))
+                draw_grid(exit_pos)
+                all_sprites.draw(screen)
+                # Hiển thị stage trong HUD
+                draw_hud(score, algorithm, difficulty, f"Stage {current_stage + 1}: {map_order[current_map_idx]}", player)
+                pygame.display.flip()
+
+        if running and not game_active and current_stage < len(STAGES):
+            replay = game_over_screen(score)
+            if not replay:
+                running = False
 
 pygame.quit()
