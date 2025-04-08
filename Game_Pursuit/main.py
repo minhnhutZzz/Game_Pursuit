@@ -86,9 +86,9 @@ MAPS = {
         [1, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 1],
         [1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1],
+        [1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1],
+        [1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
         [1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -167,7 +167,7 @@ MAPS = {
         [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
         [1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1],
         [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
-        [1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1],
+        [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1],
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1],
     ],
     "Thanh pho": [
@@ -520,8 +520,8 @@ class Player(pygame.sprite.Sprite):
         self.rect.center = self.pixel_pos
 
         # tốc độ người chơi
-        self.speed = 5
-        self.default_speed = 5
+        self.speed = 3
+        self.default_speed = 3
         self.speed_boost_timer = 0
 
         # sức khỏe người chơi
@@ -566,7 +566,7 @@ class Player(pygame.sprite.Sprite):
 
     # tăng tốc
     def activate_speed_boost(self):
-        self.speed = 8
+        self.speed = 5
         self.speed_boost_timer = 5 * FPS
 
     # chạm vào gai
@@ -680,9 +680,9 @@ class Enemy(pygame.sprite.Sprite):
         if difficulty == "Easy":
             self.move_delay = 30
         elif difficulty == "Medium":
-            self.move_delay = 15
+            self.move_delay = 25
         else:
-            self.move_delay = 5
+            self.move_delay = 20
         self.default_move_delay = self.move_delay
         self.slow_timer = 0
         self.invisibility_timer = 0
@@ -690,7 +690,7 @@ class Enemy(pygame.sprite.Sprite):
     # trạng thái làm chậm
     def activate_slow(self):
         self.move_delay = self.default_move_delay * 2  # Làm chậm
-        self.slow_timer = 5 * FPS  # 10 giây
+        self.slow_timer = 5 * FPS  # 5 giây
 
     # trạng thái tàng hình
     def activate_invisibility(self):
@@ -1243,11 +1243,27 @@ while running:
             all_sprites.add(player, enemy)
             enemies.add(enemy)
 
+            # Khởi tạo quái vật
             exit_pos = get_exit_position()
+            num_enemies = 0  # Số quái vật ban đầu
+            if (difficulty == "Medium" or difficulty == "Hard" ) and current_stage > 0:
+                num_enemies += current_stage  # Thêm 1 quái vật cho mỗi map đã qua trong Medium
+
+            enemy_positions = []
+            for _ in range(num_enemies):
+                enemy_pos = get_empty_position()
+                # Đảm bảo vị trí không trùng với người chơi, lối ra, hoặc quái vật khác
+                while (enemy_pos == player_pos or enemy_pos == exit_pos or
+                       enemy_pos in enemy_positions):
+                    enemy_pos = get_empty_position()
+                enemy_positions.append(enemy_pos)
+                enemy = Enemy(enemy_pos[0], enemy_pos[1], player, algorithm, difficulty)
+                all_sprites.add(enemy)
+                enemies.add(enemy)
 
             # Điều chỉnh số lượng vật phẩm và gai theo độ khó của màn
-            num_items = max(8 - current_stage, 1)  # Giảm vật phẩm khi màn tăng
-            num_spikes = 5 + current_stage  # Tăng gai khi màn tăng
+            num_items = max(10 - current_stage, 1)  # Giảm vật phẩm khi màn tăng
+            num_spikes = 4 + current_stage  # Tăng gai khi màn tăng
             spawn_items(grid, player_pos, enemy_pos, exit_pos, num_items=num_items, num_spikes=num_spikes)
 
             while game_active:
@@ -1313,11 +1329,13 @@ while running:
                         if pickup_sound:
                             pickup_sound.play()
                     elif item == 4:
-                        enemy.activate_slow()
+                        for enemy in enemies:  # Làm chậm tất cả quái vật
+                            enemy.activate_slow()
                         if pickup_sound:
                             pickup_sound.play()
                     elif item == 5:
-                        enemy.activate_invisibility()
+                        for enemy in enemies:  # Tàng hình tất cả quái vật
+                            enemy.activate_invisibility()
                         if pickup_sound:
                             pickup_sound.play()
                     elif item == 6:
