@@ -945,7 +945,7 @@ def menu_screen():
     selected_difficulty = 0
 
     try:
-        menu_background = pygame.image.load(r"asset\anh_backgound\anh8.jpg").convert()
+        menu_background = pygame.image.load(r"asset\anh_backgound\a1.jpg").convert()
         menu_background = pygame.transform.scale(menu_background, (WINDOW_WIDTH, WINDOW_HEIGHT))
     except Exception as e:
         print(f"Không thể tải menu_background.png: {e}")
@@ -964,14 +964,20 @@ def menu_screen():
 
     while menu_active:
         screen.blit(menu_background, (0, 0))
-        title_text = title_font.render("Pursuit Game", True, WHITE)
-        title_rect = title_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 4))
+        title_text = title_font.render("Pursuit Game", True, YELLOW)
+        title_shadow = title_font.render("Pursuit Game", True, BLACK)
+        title_rect = title_text.get_rect(center=(WINDOW_WIDTH // 2+300, WINDOW_HEIGHT // 4-50))
+
+        # Vẽ bóng (lệch xuống dưới và sang phải 3 pixel)
+        screen.blit(title_shadow, title_rect.move(3, 3))
+
         screen.blit(title_text, title_rect)
+
 
         for i, difficulty in enumerate(difficulty_options):
             color = YELLOW if i == selected_difficulty else WHITE
             text = option_font.render(difficulty, True, color)
-            text_rect = text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + i * 60))
+            text_rect = text.get_rect(center=(WINDOW_WIDTH // 2+290, WINDOW_HEIGHT // 2 + i * 60-130))
             screen.blit(text, text_rect)
 
 
@@ -1082,10 +1088,10 @@ def draw_hud(score, difficulty, stage_info, player):
     hud_font = pygame.font.Font(None, 36)
 
     # Thanh máu
-    pygame.draw.rect(screen, RED, (10, 10, 200, 20))
-    health_width = (player.health / player.max_health) * 200
-    pygame.draw.rect(screen, GREEN, (10, 10, health_width, 20))
-    pygame.draw.rect(screen, BLACK, (10, 10, 200, 20), 2)
+    pygame.draw.rect(screen, RED, (10, 190, 150, 12))
+    health_width = (player.health / player.max_health) * 150
+    pygame.draw.rect(screen, GREEN, (10, 190, health_width, 12))
+    pygame.draw.rect(screen, BLACK, (10, 190, 150, 12), 2)
 
     # Điểm số
     score_text = hud_font.render(f"Score: {score}", True, WHITE)
