@@ -35,6 +35,8 @@ YELLOW = (255, 255, 0)
 DARK_RED = (150, 0, 0)
 DARK_BLUE = (20, 20, 50)
 GREEN=(0,255,0)
+xanhnhat=(150, 255, 150)
+
 
 # Thiết lập FPS
 clock = pygame.time.Clock()
@@ -275,13 +277,14 @@ def get_empty_position():
 
 # Vẽ lưới
 def draw_grid(exit_pos=None):
-    pygame.draw.rect(screen, DARK_GRAY, (MAZE_OFFSET_X, MAZE_OFFSET_Y, MAZE_WIDTH, MAZE_HEIGHT), 5)
+    pygame.draw.rect(screen, DARK_GRAY, (MAZE_OFFSET_X, MAZE_OFFSET_Y, MAZE_WIDTH, MAZE_HEIGHT), 3)
     for y in range(GRID_HEIGHT):
         for x in range(GRID_WIDTH):
             rect = pygame.Rect(MAZE_OFFSET_X + x * GRID_SIZE, MAZE_OFFSET_Y + y * GRID_SIZE, GRID_SIZE, GRID_SIZE)
             if grid[y][x] == 1:
-                pygame.draw.rect(screen, GRAY, rect)
-                pygame.draw.rect(screen, DARK_GRAY, rect, 2)
+                #pygame.draw.rect(screen, GRAY, rect)
+                #pygame.draw.rect(screen, DARK_GRAY, rect, 2)
+                pass
             elif grid[y][x] == 2:  # Lối ra
                 pygame.draw.rect(screen, YELLOW, rect)
                 pygame.draw.rect(screen, BLACK, rect, 2)
@@ -305,7 +308,7 @@ def draw_grid(exit_pos=None):
                 screen.blit(heal_img, (rect.x+2.5, rect.y+2.5))
 
             else:
-                pygame.draw.rect(screen, LIGHT_GREEN, rect)
+                pygame.draw.rect(screen, xanhnhat, rect)
             pygame.draw.rect(screen, BLACK, rect, 1)
 
 
@@ -832,6 +835,12 @@ except Exception as e:
     bomb_img = pygame.Surface((GRID_SIZE - 5, GRID_SIZE - 5), pygame.SRCALPHA)
     pygame.draw.circle(bomb_img, (100, 0, 0), (12.5, 12.5), 12)  # Hình mặc định
 
+
+# tải hình ảnh tường
+WALL_TEXTURE = pygame.image.load(r"asset/anh_icon/gach3.jpg").convert()
+WALL_TEXTURE = pygame.transform.scale(WALL_TEXTURE, (MAZE_WIDTH, MAZE_HEIGHT))
+
+
 # Tải âm thanh nổ bom
 try:
     bomb_sound = pygame.mixer.Sound(r"asset\nhac\tieng_bom.mp3")
@@ -1250,6 +1259,9 @@ while running:
 
                 # Vẽ mọi thứ
                 screen.blit(game_background, (0, 0))
+                # Vẽ WALL_TEXTURE làm nền cho mê cung
+                screen.blit(WALL_TEXTURE, (MAZE_OFFSET_X, MAZE_OFFSET_Y))
+
                 draw_grid(exit_pos)
                 all_sprites.draw(screen)
                 draw_hud(score, difficulty, f"Stage {current_stage + 1}: {map_order[current_map_idx]}", player)
