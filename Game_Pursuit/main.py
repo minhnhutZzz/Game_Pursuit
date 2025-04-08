@@ -3,6 +3,13 @@ import random
 import heapq
 import math
 from collections import deque
+import cv2
+import numpy as np
+import os
+
+video_path = os.path.abspath("asset/anh_background/BG1.mp4")
+cap = cv2.VideoCapture(video_path)
+print("Đường dẫn tuyệt đối:", video_path)
 
 # Khởi tạo Pygame
 pygame.init()
@@ -672,15 +679,28 @@ class Enemy(pygame.sprite.Sprite):
                             break
 
 
-
-
-# Tải hình nền bắt đầu game
+background_frames = []
 try:
-    background = pygame.image.load(r"asset\anh_backgound\anh8.jpg").convert()
-    background = pygame.transform.smoothscale(background, (WINDOW_WIDTH, WINDOW_HEIGHT))  # Dùng smoothscale cho chất lượng tốt hơn
-except:
+    cap = cv2.VideoCapture(r"D:\MonHoc\N2_HK2\AI\PROJECTAINE\Game_Pursuit\Game_Pursuit\asset\anh_background\BG1.mp4")
+    if not cap.isOpened():
+        raise Exception("Không thể mở file MP4")
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+        # Chuyển từ BGR (OpenCV) sang RGB (Pygame)
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        # Chuyển thành Pygame Surface
+        frame_surface = pygame.surfarray.make_surface(np.transpose(frame_rgb, (1, 0, 2)))
+        frame_surface = pygame.transform.scale(frame_surface, (WINDOW_WIDTH, WINDOW_HEIGHT))
+        background_frames.append(frame_surface)
+    cap.release()
+except Exception as e:
+    print(f"Không thể tải video BG1.mp4 bằng OpenCV: {e}")
     background = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
     background.fill((50, 150, 50))
+    background_frames = [background]
 
 # Tải hình nền kết thúc game
 try:
