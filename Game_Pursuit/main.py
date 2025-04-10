@@ -36,6 +36,8 @@ DARK_RED = (150, 0, 0)
 DARK_BLUE = (20, 20, 50)
 GREEN=(0,255,0)
 xanhnhat=(150, 255, 150)
+hongdam=(255, 20, 149)
+hongnhat=(253, 38, 252)
 
 
 # Thiết lập FPS
@@ -306,7 +308,9 @@ def draw_grid(exit_pos=None):
             elif grid[y][x]==8:
                 pygame.draw.rect(screen, LIGHT_GREEN, rect)
                 screen.blit(heal_img, (rect.x+2.5, rect.y+2.5))
-
+            elif grid[y][x] == 9:  # Chìa khóa
+                pygame.draw.rect(screen, WHITE, rect)
+                screen.blit(key_img, (rect.x + 2.5, rect.y + 2.5))
             else:
                 pygame.draw.rect(screen, xanhnhat, rect)
             pygame.draw.rect(screen, BLACK, rect, 1)
@@ -334,6 +338,16 @@ def spawn_items(grid, player_pos, enemy_pos, exit_pos, num_items=3, num_spikes=2
     item_types = [3, 4, 5, 7,8]
     placed_items = 0
     placed_spikes = 0
+    key_placed = False
+
+    # Sinh chìa khóa trước
+    while not key_placed:
+        x = random.randint(0, GRID_WIDTH - 1)
+        y = random.randint(0, GRID_HEIGHT - 1)
+        pos = (x, y)
+        if (grid[y][x] == 0 and pos != player_pos and pos != enemy_pos and pos != exit_pos):
+            grid[y][x] = 9  # Giá trị cho chìa khóa
+            key_placed = True
 
     # Sinh vật phẩm
     while placed_items < num_items:
@@ -536,6 +550,17 @@ class Player(pygame.sprite.Sprite):
         self.bombs = 0  # Số lượng bom trong giỏ đồ
         self.b_key_pressed = False
 
+        # chia khoa
+        self.has_key = False  # Người chơi chưa có chìa khóa
+        self.unlock_timer = 0  # Thời gian mở cửa
+        self.show_key_message_timer = 0  # Timer cho thông báo thiếu chìa khóa
+
+    # nhặt chìa khóa
+    def pick_key(self):
+        self.has_key = True
+        if pickup_sound:
+            pickup_sound.play()
+
     # hàm thêm bomb
     def add_bomb(self):
         self.bombs += 1
@@ -616,6 +641,15 @@ class Player(pygame.sprite.Sprite):
         else:
             self.image.set_alpha(255)
 
+        # Xử lý thời gian mở cửa
+        if self.unlock_timer > 0:
+            self.unlock_timer -= 1
+
+
+        # Xử lý thời gian hiển thị thông báo thiếu chìa khóa
+        if self.show_key_message_timer > 0:
+            self.show_key_message_timer -= 1
+
         # ấn phím, di chuyển của nhân vật
         keys = pygame.key.get_pressed()
         target_grid_x, target_grid_y = self.grid_pos[0], self.grid_pos[1]
@@ -654,13 +688,13 @@ class Enemy(pygame.sprite.Sprite):
 
         # vẽ quái vật
         self.image = pygame.Surface((20, 20), pygame.SRCALPHA)
-        pygame.draw.circle(self.image, DARK_RED, (10, 10), 8)
+        pygame.draw.circle(self.image, hongdam, (10, 10), 8)
         for angle in range(0, 360, 45):
             rad = math.radians(angle)
             x1, y1 = 10, 10
             x2 = x1 + math.cos(rad) * 10
             y2 = y1 + math.sin(rad) * 10
-            pygame.draw.line(self.image, RED, (x1, y1), (x2, y2), 2)
+            pygame.draw.line(self.image, hongnhat, (x1, y1), (x2, y2), 2)
         pygame.draw.circle(self.image, WHITE, (8, 8), 2)
         pygame.draw.circle(self.image, WHITE, (12, 8), 2)
         pygame.draw.circle(self.image, BLACK, (8, 8), 1)
@@ -839,6 +873,13 @@ except Exception as e:
 # tải hình ảnh tường
 WALL_TEXTURE = pygame.image.load(r"asset/anh_icon/gach3.jpg").convert()
 WALL_TEXTURE = pygame.transform.scale(WALL_TEXTURE, (MAZE_WIDTH, MAZE_HEIGHT))
+
+# Tải hình ảnh chìa khóa (thêm vào phần tải tài nguyên)
+try:
+    key_img = pygame.image.load(r"asset\anh_icon\chiakhoa.png").convert_alpha()
+    key_img = pygame.transform.scale(key_img, (GRID_SIZE - 5, GRID_SIZE - 5))
+except Exception as e:
+    print(f"Không thể tải hình ảnh chìa khóa: {e}")
 
 
 # Tải âm thanh nổ bom
@@ -1087,6 +1128,11 @@ def victory_screen(final_score):
 def draw_hud(score, difficulty, stage_info, player):
     hud_font = pygame.font.Font(None, 36)
 
+    # trạng thái chìa khóa
+    key = "Yes" if player.has_key else "No"
+    key_text = font.render(f"KEY: {key}", True, WHITE)
+    screen.blit(key_text, (10, 190))
+
     # Thanh máu
     pygame.draw.rect(screen, RED, (10, 190, 150, 12))
     health_width = (player.health / player.max_health) * 150
@@ -1281,12 +1327,21 @@ while running:
 
                 # Vẽ mọi thứ
                 screen.blit(game_background, (0, 0))
-                # Vẽ WALL_TEXTURE làm nền cho mê cung
                 screen.blit(WALL_TEXTURE, (MAZE_OFFSET_X, MAZE_OFFSET_Y))
-
                 draw_grid(exit_pos)
                 all_sprites.draw(screen)
                 draw_hud(score, difficulty, f"Stage {current_stage + 1}: {map_order[current_map_idx]}", player)
+
+                # Hiển thị thông báo khi đang mở cửa
+                if player.unlock_timer > 0:
+                    unlock_text = font.render(f"Opening door... {player.unlock_timer // FPS + 1}s", True, WHITE)
+                    screen.blit(unlock_text, (WINDOW_WIDTH // 2 - 100, WINDOW_HEIGHT - 50))
+
+                # Hiển thị thông báo thiếu chìa khóa
+                if player.show_key_message_timer > 0:
+                    need_key_text = font.render("You need a key to exit!", True, RED)
+                    screen.blit(need_key_text, (WINDOW_WIDTH // 2 - 100, WINDOW_HEIGHT - 50))
+
                 pygame.display.flip()
 
                 # Xử lý va chạm với quái vật
@@ -1295,46 +1350,61 @@ while running:
                         collision_sound.play()
                     game_active = False
 
-                tam = 0
+                # Xử lý lối ra
                 if tuple(player.grid_pos) == exit_pos:
+                    if player.has_key:
+                        if player.unlock_timer == 0:  # Bắt đầu mở cửa
+                            player.unlock_timer = 5 * FPS  # 5 giây
+
+                    else:
+                        if player.show_key_message_timer == 0:
+                            player.show_key_message_timer = 1 * FPS
+                else:
+                    if player.unlock_timer > 0:
+                        player.unlock_timer = 0  # Hủy mở cửa nếu rời lối ra
+                        print(player.unlock_timer)
+
+                # Kiểm tra nếu cửa đã mở xong
+                if player.unlock_timer <= 1 and tuple(player.grid_pos) == exit_pos and player.has_key:
+
+                    player.has_key = False
                     current_map_idx += 1
                     if current_map_idx >= len(map_order):
                         if current_stage + 1 < len(STAGES):
-                            # Hiển thị giao diện chuyển màn
                             continue_game = stage_transition_screen(current_stage + 1, current_stage + 2, score)
                             if not continue_game:
                                 running = False
                                 game_active = False
                             current_stage += 1
                         else:
-                            # Đã hoàn thành tất cả các stage
                             replay = victory_screen(score)
-                            if replay:  # Nếu bấm R, quay lại menu
+                            if replay:
                                 game_active = False
-                                # Đặt lại trạng thái để bắt đầu game mới
                                 score = 0
                                 current_stage = 0
-                                break  # Thoát vòng lặp trong cùng
-                            else:  # Nếu bấm Q, thoát game hoàn toàn
+                                break
+                            else:
                                 running = False
                                 game_active = False
                                 break
                     break
 
+                # Xử lý vật phẩm
                 player_grid_x, player_grid_y = player.grid_pos
                 item = grid[player_grid_y][player_grid_x]
-                if item in [3, 4, 5, 6, 7, 8]:
+                if item in [3, 4, 5, 6, 7, 8, 9]:
+                    print(f"Item detected: {item}")
                     if item == 3:
                         player.activate_speed_boost()
                         if pickup_sound:
                             pickup_sound.play()
                     elif item == 4:
-                        for enemy in enemies:  # Làm chậm tất cả quái vật
+                        for enemy in enemies:
                             enemy.activate_slow()
                         if pickup_sound:
                             pickup_sound.play()
                     elif item == 5:
-                        for enemy in enemies:  # Tàng hình tất cả quái vật
+                        for enemy in enemies:
                             enemy.activate_invisibility()
                         if pickup_sound:
                             pickup_sound.play()
@@ -1344,6 +1414,9 @@ while running:
                         player.add_bomb()
                     elif item == 8:
                         player.heal(20)
+                    elif item == 9:
+                        player.pick_key()
+
                     if item != 6:
                         grid[player_grid_y][player_grid_x] = 0
 
