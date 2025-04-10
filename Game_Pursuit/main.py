@@ -311,6 +311,9 @@ def draw_grid(exit_pos=None):
             elif grid[y][x] == 9:  # Chìa khóa
                 pygame.draw.rect(screen, WHITE, rect)
                 screen.blit(key_img, (rect.x + 2.5, rect.y + 2.5))
+            elif grid[y][x] == 10:  # Ngôi sao
+                pygame.draw.rect(screen, LIGHT_GREEN, rect)
+                screen.blit(star_img, (rect.x + 2.5, rect.y + 2.5))
             else:
                 pygame.draw.rect(screen, xanhnhat, rect)
             pygame.draw.rect(screen, BLACK, rect, 1)
@@ -339,6 +342,7 @@ def spawn_items(grid, player_pos, enemy_pos, exit_pos, num_items=3, num_spikes=2
     placed_items = 0
     placed_spikes = 0
     key_placed = False
+    stars_placed = 0
 
     # Sinh chìa khóa trước
     while not key_placed:
@@ -348,6 +352,16 @@ def spawn_items(grid, player_pos, enemy_pos, exit_pos, num_items=3, num_spikes=2
         if (grid[y][x] == 0 and pos != player_pos and pos != enemy_pos and pos != exit_pos):
             grid[y][x] = 9  # Giá trị cho chìa khóa
             key_placed = True
+
+        # Sinh 3 ngôi sao
+        while stars_placed < 3:
+            x = random.randint(0, GRID_WIDTH - 1)
+            y = random.randint(0, GRID_HEIGHT - 1)
+            pos = (x, y)
+            if (grid[y][x] == 0 and pos != player_pos and pos != enemy_pos and pos != exit_pos):
+                grid[y][x] = 10  # Giá trị cho ngôi sao
+                stars_placed += 1
+                print(f"Star {stars_placed} placed at: ({x}, {y})")
 
     # Sinh vật phẩm
     while placed_items < num_items:
@@ -554,6 +568,15 @@ class Player(pygame.sprite.Sprite):
         self.has_key = False  # Người chơi chưa có chìa khóa
         self.unlock_timer = 0  # Thời gian mở cửa
         self.show_key_message_timer = 0  # Timer cho thông báo thiếu chìa khóa
+
+        # ngôi sao
+        self.stars_collected = 0 # Số ngôi sao đã nhặt trong map hiện tại
+
+    # nhặt ngôi sao
+    def pick_star(self):
+        self.stars_collected += 1
+        if pickup_sound:
+            pickup_sound.play()
 
     # nhặt chìa khóa
     def pick_key(self):
@@ -882,6 +905,15 @@ except Exception as e:
     print(f"Không thể tải hình ảnh chìa khóa: {e}")
 
 
+
+# tải ảnh ngôi sao
+try:
+    star_img = pygame.image.load(r"asset\anh_icon\ngoisao.png").convert_alpha()
+    star_img = pygame.transform.scale(star_img, (GRID_SIZE - 5, GRID_SIZE - 5))
+except Exception as e:
+    print(f"Không thể tải hình ảnh ngôi sao: {e}")
+
+
 # Tải âm thanh nổ bom
 try:
     bomb_sound = pygame.mixer.Sound(r"asset\nhac\tieng_bom.mp3")
@@ -1128,16 +1160,6 @@ def victory_screen(final_score):
 def draw_hud(score, difficulty, stage_info, player):
     hud_font = pygame.font.Font(None, 36)
 
-    # trạng thái chìa khóa
-    key = "Yes" if player.has_key else "No"
-    key_text = font.render(f"KEY: {key}", True, WHITE)
-    screen.blit(key_text, (10, 190))
-
-    # Thanh máu
-    pygame.draw.rect(screen, RED, (10, 190, 150, 12))
-    health_width = (player.health / player.max_health) * 150
-    pygame.draw.rect(screen, GREEN, (10, 190, health_width, 12))
-    pygame.draw.rect(screen, BLACK, (10, 190, 150, 12), 2)
 
     # Điểm số
     score_text = hud_font.render(f"Score: {score}", True, WHITE)
@@ -1162,6 +1184,22 @@ def draw_hud(score, difficulty, stage_info, player):
     # Số bom
     bomb_text = hud_font.render(f"Bombs: {player.bombs}", True, WHITE)
     screen.blit(bomb_text, (10, 160))
+
+    # trạng thái chìa khóa
+    key = "Yes" if player.has_key else "No"
+    key_text = font.render(f"KEY: {key}", True, WHITE)
+    screen.blit(key_text, (10, 190))
+
+    # ngôi sao
+    stars_text = font.render(f"Stars: {player.stars_collected}", True, WHITE)
+    screen.blit(stars_text, (10,220))
+
+    # Thanh máu
+    pygame.draw.rect(screen, RED, (10, 250, 150, 12))
+    health_width = (player.health / player.max_health) * 150
+    pygame.draw.rect(screen, GREEN, (10, 250, health_width, 12))
+    pygame.draw.rect(screen, BLACK, (10, 250, 150, 12), 2)
+
 
 # giao diện chuyển màn chơi
 def stage_transition_screen(completed_stage, next_stage, score):
@@ -1366,8 +1404,9 @@ while running:
 
                 # Kiểm tra nếu cửa đã mở xong
                 if player.unlock_timer <= 1 and tuple(player.grid_pos) == exit_pos and player.has_key:
-
-                    player.has_key = False
+                    player.has_key = False #Hủy khóa
+                    player.stars_collected = 0 # đặt lại số ngôi sao
+                    player.unlock_timer = 0
                     current_map_idx += 1
                     if current_map_idx >= len(map_order):
                         if current_stage + 1 < len(STAGES):
@@ -1392,8 +1431,8 @@ while running:
                 # Xử lý vật phẩm
                 player_grid_x, player_grid_y = player.grid_pos
                 item = grid[player_grid_y][player_grid_x]
-                if item in [3, 4, 5, 6, 7, 8, 9]:
-                    print(f"Item detected: {item}")
+                if item in [3, 4, 5, 6, 7, 8, 9, 10]:
+
                     if item == 3:
                         player.activate_speed_boost()
                         if pickup_sound:
@@ -1416,7 +1455,8 @@ while running:
                         player.heal(20)
                     elif item == 9:
                         player.pick_key()
-
+                    elif item == 10:
+                        player.pick_star()
                     if item != 6:
                         grid[player_grid_y][player_grid_x] = 0
 
