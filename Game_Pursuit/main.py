@@ -572,9 +572,12 @@ class Player(pygame.sprite.Sprite):
         # ngôi sao
         self.stars_collected = 0 # Số ngôi sao đã nhặt trong map hiện tại
 
+
     # nhặt ngôi sao
     def pick_star(self):
         self.stars_collected += 1
+        global total_stars
+        total_stars += 1  # Cộng dồn vào biến toàn cục
         if pickup_sound:
             pickup_sound.play()
 
@@ -616,6 +619,8 @@ class Player(pygame.sprite.Sprite):
     def activate_speed_boost(self):
         self.speed = 5
         self.speed_boost_timer = 5 * FPS
+        if pickup_sound:
+            pickup_sound.play()
 
     # chạm vào gai
     def hit_spike(self):
@@ -748,10 +753,14 @@ class Enemy(pygame.sprite.Sprite):
     def activate_slow(self):
         self.move_delay = self.default_move_delay * 2  # Làm chậm
         self.slow_timer = 5 * FPS  # 5 giây
+        if pickup_sound:
+            pickup_sound.play()
 
     # trạng thái tàng hình
     def activate_invisibility(self):
         self.invisibility_timer = 5 * FPS  # 5 giây
+        if pickup_sound:
+            pickup_sound.play()
 
 
     def update(self):
@@ -1080,17 +1089,14 @@ def game_over_screen(final_score):
     overlay.set_alpha(120)
     screen.blit(overlay, (0, 0))
 
-    # tiêu đề
     game_over_text = font_large.render("Game Over!", True, RED)
     score_text = font.render(f"Final Score: {final_score}", True, WHITE)
     replay_text = font.render("Press R to Replay", True, WHITE)
 
-    # căn chỉnh
     game_over_rect = game_over_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 3))
     score_rect = score_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2))
     replay_rect = replay_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT * 2 // 3 + 20))
 
-    # vẽ nền cho chữ, hiển thị lên màn hình
     for text, rect in [(game_over_text, game_over_rect), (score_text, score_rect), (replay_text, replay_rect)]:
         bg = pygame.Surface((rect.width + 20, rect.height + 10))
         bg.fill(BLACK)
@@ -1100,7 +1106,6 @@ def game_over_screen(final_score):
 
     pygame.display.flip()
 
-    # chờ người chơi thoát
     waiting = True
     while waiting:
         for event in pygame.event.get():
@@ -1111,7 +1116,8 @@ def game_over_screen(final_score):
                     return True
     return False
 
-def victory_screen(final_score):
+# chiến thắng
+def victory_screen(final_score, total_stars):
     pygame.mixer.music.stop()
     if victory_sound:
         victory_sound.play()
@@ -1124,13 +1130,16 @@ def victory_screen(final_score):
 
     victory_text = font_large.render("You Win!", True, YELLOW)
     score_text = font.render(f"Final Score: {final_score}", True, WHITE)
-    replay_text = font.render("Press R to Replay, Q to Quit", True, WHITE)  # Thêm "Q to Quit"
+    stars_text = font.render(f"Total Stars: {total_stars}", True, WHITE)
+    replay_text = font.render("Press R to Replay, Q to Quit", True, WHITE)
 
     victory_rect = victory_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 3))
     score_rect = score_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2))
+    stars_rect = stars_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + 40))
     replay_rect = replay_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT * 2 // 3 + 20))
 
-    for text, rect in [(victory_text, victory_rect), (score_text, score_rect), (replay_text, replay_rect)]:
+    for text, rect in [(victory_text, victory_rect), (score_text, score_rect),
+                       (stars_text, stars_rect), (replay_text, replay_rect)]:
         bg = pygame.Surface((rect.width + 20, rect.height + 10))
         bg.fill(BLACK)
         bg.set_alpha(150)
@@ -1160,9 +1169,8 @@ def victory_screen(final_score):
 def draw_hud(score, difficulty, stage_info, player):
     hud_font = pygame.font.Font(None, 36)
 
-
-    # Điểm số
-    score_text = hud_font.render(f"Score: {score}", True, WHITE)
+    # Điểm số map hiện tại
+    score_text = hud_font.render(f"Map Score: {score}", True, WHITE)
     screen.blit(score_text, (10, 40))
 
     # Độ khó
@@ -1173,7 +1181,7 @@ def draw_hud(score, difficulty, stage_info, player):
     stage_text = hud_font.render(stage_info, True, WHITE)
     screen.blit(stage_text, (10, 100))
 
-    # Thuật toán hiện tại (lấy từ STAGE_ALGORITHMS)
+    # Thuật toán hiện tại
     current_stage = int(stage_info.split("Stage ")[1].split(":")[0]) - 1
     map_name = stage_info.split(": ")[1]
     map_idx = STAGES[current_stage].index(map_name)
@@ -1185,14 +1193,14 @@ def draw_hud(score, difficulty, stage_info, player):
     bomb_text = hud_font.render(f"Bombs: {player.bombs}", True, WHITE)
     screen.blit(bomb_text, (10, 160))
 
-    # trạng thái chìa khóa
+    # Trạng thái chìa khóa
     key = "Yes" if player.has_key else "No"
     key_text = font.render(f"KEY: {key}", True, WHITE)
     screen.blit(key_text, (10, 190))
 
-    # ngôi sao
-    stars_text = font.render(f"Stars: {player.stars_collected}", True, WHITE)
-    screen.blit(stars_text, (10,220))
+    # Tổng số ngôi sao
+    stars_text = font.render(f"Total Stars: {total_stars}", True, WHITE)
+    screen.blit(stars_text, (10, 220))
 
     # Thanh máu
     pygame.draw.rect(screen, RED, (10, 250, 150, 12))
@@ -1212,15 +1220,17 @@ def stage_transition_screen(completed_stage, next_stage, score):
     completed_text = font_large.render(f"Stage {completed_stage} Completed!", True, YELLOW)
     next_text = font.render(f"Next: Stage {next_stage}", True, WHITE)
     score_text = font.render(f"Score: {score}", True, WHITE)
+    stars_text = font.render(f"Total Stars: {total_stars}", True, WHITE)
     continue_text = font_small.render("Press ENTER to Continue", True, WHITE)
 
     completed_rect = completed_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 3))
     next_rect = next_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 - 20))
     score_rect = score_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + 20))
+    stars_rect = stars_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + 60))
     continue_rect = continue_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT * 2 // 3))
 
     for text, rect in [(completed_text, completed_rect), (next_text, next_rect),
-                       (score_text, score_rect), (continue_text, continue_rect)]:
+                       (score_text, score_rect), (stars_text, stars_rect), (continue_text, continue_rect)]:
         bg = pygame.Surface((rect.width + 20, rect.height + 10))
         bg.fill(BLACK)
         bg.set_alpha(150)
@@ -1278,7 +1288,8 @@ while running:
     except:
         print("Không thể tải gameplay_music.mp3")
 
-    score = 0
+    total_map_score = 0  # Tổng điểm của tất cả các map
+    total_stars = 0  # Tổng ngôi sao qua tất cả các map
     current_stage = 0
     game_active = True
 
@@ -1317,26 +1328,24 @@ while running:
             else:
                 print("Vị trí cố định không hợp lệ, quay lại chọn ngẫu nhiên.")
                 player_pos = get_empty_position()
-                player = Player(player_pos[0], player_pos[1])
-                exit_pos = get_exit_position()
                 enemy_pos = get_empty_position()
                 while enemy_pos == player_pos:
                     enemy_pos = get_empty_position()
+                player = Player(player_pos[0], player_pos[1])
+                exit_pos = get_exit_position()
                 enemy = Enemy(enemy_pos[0], enemy_pos[1], player, algorithm, difficulty)
 
             all_sprites.add(player, enemy)
             enemies.add(enemy)
 
             # Khởi tạo quái vật
-            exit_pos = get_exit_position()
-            num_enemies = 0  # Số quái vật ban đầu
-            if (difficulty == "Medium" or difficulty == "Hard" ) and current_stage > 0:
-                num_enemies += current_stage  # Thêm 1 quái vật cho mỗi map đã qua trong Medium
+            num_enemies = 0
+            if (difficulty == "Medium" or difficulty == "Hard") and current_stage > 0:
+                num_enemies += current_stage
 
             enemy_positions = []
             for _ in range(num_enemies):
                 enemy_pos = get_empty_position()
-                # Đảm bảo vị trí không trùng với người chơi, lối ra, hoặc quái vật khác
                 while (enemy_pos == player_pos or enemy_pos == exit_pos or
                        enemy_pos in enemy_positions):
                     enemy_pos = get_empty_position()
@@ -1345,10 +1354,16 @@ while running:
                 all_sprites.add(enemy)
                 enemies.add(enemy)
 
-            # Điều chỉnh số lượng vật phẩm và gai theo độ khó của màn
-            num_items = max(10 - current_stage, 1)  # Giảm vật phẩm khi màn tăng
-            num_spikes = 4 + current_stage  # Tăng gai khi màn tăng
+            # Điều chỉnh số lượng vật phẩm và gai
+            num_items = max(10 - current_stage, 1)
+            num_spikes = 4 + current_stage
             spawn_items(grid, player_pos, enemy_pos, exit_pos, num_items=num_items, num_spikes=num_spikes)
+
+            # Khởi tạo điểm số cho map hiện tại
+            map_score = 100  # Điểm bắt đầu từ 100
+            time_elapsed = 0  # Thời gian đã trôi qua (tính bằng frame)
+            score_decrement_interval = 5 * FPS
+            decrement_amount = 5  # Trừ 5 điểm
 
             while game_active:
                 clock.tick(FPS)
@@ -1361,14 +1376,18 @@ while running:
                             player.use_bomb()
 
                 all_sprites.update()
-                score += 1
+
+                # Cập nhật thời gian và điểm số
+                time_elapsed += 1
+                if time_elapsed % score_decrement_interval == 0:
+                    map_score = max(0, map_score - decrement_amount)  # Trừ điểm, không âm
 
                 # Vẽ mọi thứ
                 screen.blit(game_background, (0, 0))
                 screen.blit(WALL_TEXTURE, (MAZE_OFFSET_X, MAZE_OFFSET_Y))
                 draw_grid(exit_pos)
                 all_sprites.draw(screen)
-                draw_hud(score, difficulty, f"Stage {current_stage + 1}: {map_order[current_map_idx]}", player)
+                draw_hud(map_score, difficulty, f"Stage {current_stage + 1}: {map_order[current_map_idx]}", player)
 
                 # Hiển thị thông báo khi đang mở cửa
                 if player.unlock_timer > 0:
@@ -1391,35 +1410,34 @@ while running:
                 # Xử lý lối ra
                 if tuple(player.grid_pos) == exit_pos:
                     if player.has_key:
-                        if player.unlock_timer == 0:  # Bắt đầu mở cửa
-                            player.unlock_timer = 5 * FPS  # 5 giây
-
+                        if player.unlock_timer == 0:
+                            player.unlock_timer = 5 * FPS
                     else:
                         if player.show_key_message_timer == 0:
                             player.show_key_message_timer = 1 * FPS
                 else:
                     if player.unlock_timer > 0:
-                        player.unlock_timer = 0  # Hủy mở cửa nếu rời lối ra
-                        print(player.unlock_timer)
+                        player.unlock_timer = 0
 
                 # Kiểm tra nếu cửa đã mở xong
                 if player.unlock_timer <= 1 and tuple(player.grid_pos) == exit_pos and player.has_key:
-                    player.has_key = False #Hủy khóa
-                    player.stars_collected = 0 # đặt lại số ngôi sao
-                    player.unlock_timer = 0
+                    player.has_key = False  # Hủy khóa
+                    total_map_score += map_score  # Cộng điểm map hiện tại vào tổng
                     current_map_idx += 1
                     if current_map_idx >= len(map_order):
                         if current_stage + 1 < len(STAGES):
-                            continue_game = stage_transition_screen(current_stage + 1, current_stage + 2, score)
+                            continue_game = stage_transition_screen(current_stage + 1, current_stage + 2, total_map_score + total_stars * 5)
                             if not continue_game:
                                 running = False
                                 game_active = False
                             current_stage += 1
                         else:
-                            replay = victory_screen(score)
+                            final_score = total_map_score + total_stars * 5
+                            replay = victory_screen(final_score, total_stars)  # Truyền total_stars
                             if replay:
                                 game_active = False
-                                score = 0
+                                total_map_score = 0
+                                total_stars = 0  # Reset khi chơi lại
                                 current_stage = 0
                                 break
                             else:
@@ -1432,21 +1450,14 @@ while running:
                 player_grid_x, player_grid_y = player.grid_pos
                 item = grid[player_grid_y][player_grid_x]
                 if item in [3, 4, 5, 6, 7, 8, 9, 10]:
-
                     if item == 3:
                         player.activate_speed_boost()
-                        if pickup_sound:
-                            pickup_sound.play()
                     elif item == 4:
                         for enemy in enemies:
                             enemy.activate_slow()
-                        if pickup_sound:
-                            pickup_sound.play()
                     elif item == 5:
                         for enemy in enemies:
                             enemy.activate_invisibility()
-                        if pickup_sound:
-                            pickup_sound.play()
                     elif item == 6:
                         player.hit_spike()
                     elif item == 7:
@@ -1465,14 +1476,14 @@ while running:
                         collision_sound.play()
                     game_active = False
 
-        # Chỉ gọi game_over_screen nếu người chơi thua (game_active = False) và chưa hoàn thành tất cả stage
-        if running and game_active == False :
-            replay = game_over_screen(score)
+        # Xử lý game over
+        if running and not game_active:
+            final_score = total_map_score + total_stars * 5
+            replay = game_over_screen(final_score)
             if not replay:
                 running = False
             else:
-                # Đặt lại trạng thái để quay lại menu
-                score = 0
+                total_map_score = 0
                 current_stage = 0
                 break
 
