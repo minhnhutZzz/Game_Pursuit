@@ -1401,6 +1401,7 @@ STAGE_ALGORITHMS = [
 # Vòng lặp game chính
 running = True
 while running:
+    check=0
     # Hiển thị splash screen
     if not splash_screen():
         break  # Thoát game nếu người dùng đóng cửa sổ trong splash screen
@@ -1564,6 +1565,7 @@ while running:
                             replay = victory_screen(final_score, total_stars)  # Truyền total_stars
                             if replay:
                                 game_active = False
+                                check=1
                                 total_map_score = 0
                                 total_stars = 0  # Reset khi chơi lại
                                 current_stage = 0
@@ -1607,13 +1609,23 @@ while running:
         # Xử lý game over
         if running and not game_active:
             final_score = total_map_score + total_stars * 5
-            if (total_map_score != 0 and total_stars != 0  and current_stage != 0):
+            if (check==0):
                 replay = game_over_screen(final_score)
-            elif not replay:
-                running = False
+                if not replay:
+                    running = False
+                else:
+                    total_map_score = 0
+                    current_stage = 0
+                    break
             else:
-                total_map_score = 0
-                current_stage = 0
-                break
+                replay = True
+                if not replay:
+                    running = False
+                else:
+                    total_map_score = 0
+                    current_stage = 0
+                    break
+
+
 
 pygame.quit()
