@@ -1607,8 +1607,9 @@ while running:
         # Xử lý game over
         if running and not game_active:
             final_score = total_map_score + total_stars * 5
-            replay = game_over_screen(final_score)
-            if not replay:
+            if (total_map_score != 0 and total_stars != 0  and current_stage != 0):
+                replay = game_over_screen(final_score)
+            elif not replay:
                 running = False
             else:
                 total_map_score = 0
