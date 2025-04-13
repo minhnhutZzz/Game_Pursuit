@@ -839,11 +839,27 @@ class Enemy(pygame.sprite.Sprite):
 
 # Tải hình nền kết thúc game
 try:
-    background2 = pygame.image.load(r"asset\anh_backgound\anhdep.jpg").convert()
+    background2 = pygame.image.load(r"asset\anh_backgound\ketthucgame.png").convert()
     background2 = pygame.transform.smoothscale(background2, (WINDOW_WIDTH, WINDOW_HEIGHT))  # Dùng smoothscale cho chất lượng tốt hơn
 except:
     background2 = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
     background2.fill((50, 150, 50))
+
+# Tải hình nền chiến thắng game
+try:
+    background3 = pygame.image.load(r"asset\anh_backgound\chienthanggame.png").convert()
+    background3 = pygame.transform.smoothscale(background3, (WINDOW_WIDTH, WINDOW_HEIGHT))  # Dùng smoothscale cho chất lượng tốt hơn
+except:
+    background3 = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+    background3.fill((50, 150, 50))
+
+# Tải hình nền chuyển level
+try:
+    background4 = pygame.image.load(r"asset\anh_backgound\anhdep.jpg").convert()
+    background4 = pygame.transform.smoothscale(background4, (WINDOW_WIDTH, WINDOW_HEIGHT))  # Dùng smoothscale cho chất lượng tốt hơn
+except:
+    background4 = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+    background4.fill((50, 150, 50))
 
 # tải ảnh vật phẩm
 try:
@@ -1020,6 +1036,114 @@ except Exception as e:
     victory_sound = None
 
 
+def splash_screen():
+    # Tải ảnh nền
+    try:
+        splash_image = pygame.image.load(r"asset\anh_backgound\anhnen.png").convert()
+        splash_image = pygame.transform.smoothscale(splash_image, (WINDOW_WIDTH, WINDOW_HEIGHT))
+    except Exception as e:
+        print(f"Không thể tải splash_screen.png: {e}")
+        splash_image = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+        splash_image.fill(DARK_BLUE)
+        text = font_large.render("Pursuit Game", True, YELLOW)
+        text_rect = text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2))
+        splash_image.blit(text, text_rect)
+
+    # Tạo bề mặt cho quả cầu
+    ball_size = 50  # Kích thước quả cầu
+    ball_surface = pygame.Surface((ball_size, ball_size), pygame.SRCALPHA)
+
+    # Vẽ quả cầu (màu xanh trùng với đường đi)
+    pygame.draw.circle(ball_surface, (0, 255, 0), (ball_size // 2, ball_size // 2), ball_size // 2)  # Màu xanh
+
+
+    # Vẽ lưới màu trắng
+    center_x, center_y = ball_size // 2, ball_size // 2
+    radius = ball_size // 2
+
+    # Vẽ các đường kinh tuyến (dọc)
+    for angle in range(0, 360, 30):  # Mỗi 30 độ
+        rad = math.radians(angle)
+        x1 = center_x + radius * math.cos(rad)
+        y1 = center_y + radius * math.sin(rad)
+        x2 = center_x - radius * math.cos(rad)
+        y2 = center_y - radius * math.sin(rad)
+        pygame.draw.line(ball_surface, (255, 255, 255), (x1, y1), (x2, y2), 2)
+
+    # Vẽ các đường vĩ tuyến (ngang)
+    for r in range(radius // 3, radius, radius // 3):  # 2 vòng vĩ tuyến
+        pygame.draw.circle(ball_surface, (255, 255, 255), (center_x, center_y), r, 2)
+
+    # Vẽ thêm một vài đường chéo để tăng chi tiết
+    pygame.draw.line(ball_surface, (255, 255, 255), (center_x - radius, center_y - radius // 2),
+                     (center_x + radius, center_y + radius // 2), 2)
+    pygame.draw.line(ball_surface, (255, 255, 255), (center_x - radius, center_y + radius // 2),
+                     (center_x + radius, center_y - radius // 2), 2)
+
+    # Tạo đường đi màu xanh (danh sách các điểm tọa độ)
+    path = []
+    for x in range(50, WINDOW_WIDTH - 50, 5):
+        y = WINDOW_HEIGHT - 50 + 20 * math.sin(x * 0.02)  # Đường cong sin
+        path.append((x, y))
+
+    # Thời gian hiển thị splash screen
+    splash_duration = 7 * 1000  # 7 giây
+
+    # Tính tốc độ để quả cầu đi hết đường trong 7 giây
+    total_path_length = len(path)  # Tổng số điểm trên đường đi
+    total_frames = (splash_duration / 1000) * FPS  # Tổng số khung hình trong 7 giây
+    ball_speed = total_path_length / total_frames  # Tốc độ để đi hết đường đúng 7 giây
+
+    start_time = pygame.time.get_ticks()
+    path_index = 0  # Chỉ số điểm hiện tại trên đường đi
+    rotation_angle = 0  # Góc xoay của quả cầu
+    rotation_speed = 360 / total_path_length * ball_speed  # Tốc độ xoay (độ/frame)
+
+    running = True
+    while running:
+        current_time = pygame.time.get_ticks()
+        if current_time - start_time >= splash_duration:
+            break
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+            if event.type == pygame.KEYDOWN:
+                break
+
+        # Cập nhật vị trí quả cầu
+        path_index += ball_speed
+        if path_index >= len(path):
+            path_index = len(path) - 1  # Dừng ở điểm cuối
+
+        # Cập nhật góc xoay để tạo hiệu ứng lăn
+        rotation_angle += rotation_speed
+        if rotation_angle >= 360:
+            rotation_angle -= 360  # Giữ góc trong khoảng 0-360
+
+        # Xoay quả cầu
+        rotated_ball = pygame.transform.rotate(ball_surface, rotation_angle)
+        rotated_rect = rotated_ball.get_rect(center=(ball_size // 2, ball_size // 2))
+
+        # Vẽ splash screen
+        screen.blit(splash_image, (0, 0))
+
+        # Vẽ đường đi màu xanh đến vị trí hiện tại của quả cầu
+        current_path_index = int(path_index)
+        if current_path_index > 0:
+            pygame.draw.lines(screen, (0, 255, 0), False, path[:current_path_index + 1], 7)  # Đường màu xanh
+
+        # Vẽ quả cầu tại vị trí hiện tại
+        ball_pos = path[int(path_index)]
+        screen.blit(rotated_ball, (ball_pos[0] - rotated_rect.width // 2, ball_pos[1] - rotated_rect.height // 2))
+
+        pygame.display.flip()
+        clock.tick(FPS)
+
+    return True
+
+
+
 # Menu chọn thuật toán, chế độ chơi và bản đồ
 def menu_screen():
     menu_active = True
@@ -1027,7 +1151,7 @@ def menu_screen():
     selected_difficulty = 0
 
     try:
-        menu_background = pygame.image.load(r"asset\anh_backgound\a1.jpg").convert()
+        menu_background = pygame.image.load(r"asset\anh_backgound\anh8.png").convert()
         menu_background = pygame.transform.scale(menu_background, (WINDOW_WIDTH, WINDOW_HEIGHT))
     except Exception as e:
         print(f"Không thể tải menu_background.png: {e}")
@@ -1048,7 +1172,7 @@ def menu_screen():
         screen.blit(menu_background, (0, 0))
         title_text = title_font.render("Pursuit Game", True, YELLOW)
         title_shadow = title_font.render("Pursuit Game", True, BLACK)
-        title_rect = title_text.get_rect(center=(WINDOW_WIDTH // 2+300, WINDOW_HEIGHT // 4-50))
+        title_rect = title_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 4))
 
         # Vẽ bóng (lệch xuống dưới và sang phải 3 pixel)
         screen.blit(title_shadow, title_rect.move(3, 3))
@@ -1059,7 +1183,7 @@ def menu_screen():
         for i, difficulty in enumerate(difficulty_options):
             color = YELLOW if i == selected_difficulty else WHITE
             text = option_font.render(difficulty, True, color)
-            text_rect = text.get_rect(center=(WINDOW_WIDTH // 2+290, WINDOW_HEIGHT // 2 + i * 60-130))
+            text_rect = text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + i * 60))
             screen.blit(text, text_rect)
 
 
@@ -1086,7 +1210,7 @@ def game_over_screen(final_score):
     screen.blit(background2, (0, 0))
     overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
     overlay.fill(DARK_BLUE)
-    overlay.set_alpha(120)
+    overlay.set_alpha(40)
     screen.blit(overlay, (0, 0))
 
     game_over_text = font_large.render("Game Over!", True, RED)
@@ -1122,10 +1246,10 @@ def victory_screen(final_score, total_stars):
     if victory_sound:
         victory_sound.play()
 
-    screen.blit(background2, (0, 0))
+    screen.blit(background3, (0, 0))
     overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
     overlay.fill(DARK_BLUE)
-    overlay.set_alpha(100)
+    overlay.set_alpha(0)
     screen.blit(overlay, (0, 0))
 
     victory_text = font_large.render("You Win!", True, YELLOW)
@@ -1211,7 +1335,7 @@ def draw_hud(score, difficulty, stage_info, player):
 
 # giao diện chuyển màn chơi
 def stage_transition_screen(completed_stage, next_stage, score):
-    screen.blit(background2, (0, 0))
+    screen.blit(background4, (0, 0))
     overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
     overlay.fill(DARK_BLUE)
     overlay.set_alpha(100)
@@ -1252,9 +1376,9 @@ def stage_transition_screen(completed_stage, next_stage, score):
 MAP_BACKGROUNDS = {
     "Me cung": r"asset\anh_backgound\map1.webp",
     "Can ho": r"asset\anh_backgound\map2.jpg",
-    "Khach san": r"asset\anh_backgound\map3.jpg",
+    "Khach san": r"asset\anh_backgound\map3.png",
     "Rung sau": r"asset\anh_backgound\map4.jpg",
-    "Nha may": r"asset\anh_backgound\map5.jpg",
+    "Nha may": r"asset\anh_backgound\map5.png",
     "Thanh pho": r"asset\anh_backgound\map6.jpg",
     # "Hang dong": r"asset\anh_backgound\hang_dong.jpg",
     # "Cau truc": r"asset\anh_backgound\cau_truc.jpg",
@@ -1277,6 +1401,10 @@ STAGE_ALGORITHMS = [
 # Vòng lặp game chính
 running = True
 while running:
+    # Hiển thị splash screen
+    if not splash_screen():
+        break  # Thoát game nếu người dùng đóng cửa sổ trong splash screen
+
     difficulty = menu_screen()
     if difficulty is None:
         break
