@@ -361,7 +361,8 @@ def spawn_items(grid, player_pos, enemy_pos, exit_pos, num_items=3, num_spikes=2
             if (grid[y][x] == 0 and pos != player_pos and pos != enemy_pos and pos != exit_pos):
                 grid[y][x] = 10  # Giá trị cho ngôi sao
                 stars_placed += 1
-                print(f"Star {stars_placed} placed at: ({x}, {y})")
+
+
 
     # Sinh vật phẩm
     while placed_items < num_items:
@@ -922,6 +923,7 @@ except Exception as e:
 WALL_TEXTURE = pygame.image.load(r"asset/anh_icon/gach3.jpg").convert()
 WALL_TEXTURE = pygame.transform.scale(WALL_TEXTURE, (MAZE_WIDTH, MAZE_HEIGHT))
 
+
 # Tải hình ảnh chìa khóa (thêm vào phần tải tài nguyên)
 try:
     key_img = pygame.image.load(r"asset\anh_icon\chiakhoa.png").convert_alpha()
@@ -930,13 +932,39 @@ except Exception as e:
     print(f"Không thể tải hình ảnh chìa khóa: {e}")
 
 
-
 # tải ảnh ngôi sao
 try:
     star_img = pygame.image.load(r"asset\anh_icon\ngoisao.png").convert_alpha()
     star_img = pygame.transform.scale(star_img, (GRID_SIZE - 5, GRID_SIZE - 5))
 except Exception as e:
     print(f"Không thể tải hình ảnh ngôi sao: {e}")
+
+# tai am thanh nhat vat pham
+try:
+    pickup_sound = pygame.mixer.Sound(r"asset\nhac\nhac_nhat_do.mp3")
+except Exception as e:
+    print(f"Không thể tải âm thanh: {e}")
+    pickup_sound = None
+
+# tai am thanh cham gai
+try:
+    spike_sound = pygame.mixer.Sound(r"asset\nhac\nhac_dinh_bay.mp3")
+except:
+    spike_sound = None
+
+# Tải âm thanh dung game
+try:
+    collision_sound = pygame.mixer.Sound(r"asset\nhac\nhac_thua_cuoc.mp3")
+except:
+    collision_sound = None
+
+
+# tai am thanh chien thang
+try:
+    victory_sound = pygame.mixer.Sound(r"asset\nhac\nhac_chien_thang.mp3")
+except Exception as e:
+    print(f"Không thể tải âm thanh: {e}")
+    victory_sound = None
 
 
 # Tải âm thanh nổ bom
@@ -1009,33 +1037,7 @@ class Explosion(pygame.sprite.Sprite):
 
 
 
-# tai am thanh nhat vat pham
-try:
-    pickup_sound = pygame.mixer.Sound(r"asset\nhac\nhac_nhat_do.mp3")
-except Exception as e:
-    print(f"Không thể tải âm thanh: {e}")
-    pickup_sound = None
-
-# tai am thanh cham gai
-try:
-    spike_sound = pygame.mixer.Sound(r"asset\nhac\nhac_dinh_bay.mp3")
-except:
-    spike_sound = None
-
-# Tải âm thanh dung game
-try:
-    collision_sound = pygame.mixer.Sound(r"asset\nhac\nhac_thua_cuoc.mp3")
-except:
-    collision_sound = None
-
-# tai am thanh chien thang
-try:
-    victory_sound = pygame.mixer.Sound(r"asset\nhac\nhac_chien_thang.mp3")
-except Exception as e:
-    print(f"Không thể tải âm thanh: {e}")
-    victory_sound = None
-
-
+# màn hình khởi động
 def splash_screen():
     # Tải ảnh nền
     try:
@@ -1205,7 +1207,7 @@ def menu_screen():
     return None
 
 # Game Over
-def game_over_screen(final_score):
+def game_over_screen(final_score, total_stars):
     pygame.mixer.music.stop()
     screen.blit(background2, (0, 0))
     overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -1213,19 +1215,34 @@ def game_over_screen(final_score):
     overlay.set_alpha(40)
     screen.blit(overlay, (0, 0))
 
-    game_over_text = font_large.render("Game Over!", True, RED)
-    score_text = font.render(f"Final Score: {final_score}", True, WHITE)
-    replay_text = font.render("Press R to Replay", True, WHITE)
+    # Hàm tạo chữ với viền để nổi bật
+    def render_text_with_outline(text, font, text_color, outline_color):
+        text_surface = font.render(text, True, text_color)
+        outline_surface = font.render(text, True, outline_color)
+        surface = pygame.Surface((text_surface.get_width() + 4, text_surface.get_height() + 4), pygame.SRCALPHA)
+        for dx, dy in [(2, 0), (-2, 0), (0, 2), (0, -2), (2, 2), (-2, -2), (2, -2), (-2, 2)]:  # 8 hướng viền
+            surface.blit(outline_surface, (dx + 2, dy + 2))
+        surface.blit(text_surface, (2, 2))
+        return surface
 
-    game_over_rect = game_over_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 3))
-    score_rect = score_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2))
-    replay_rect = replay_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT * 2 // 3 + 20))
+    # Tạo các dòng chữ với viền
+    game_over_text = render_text_with_outline("Game Over!", font_large, WHITE, RED)
+    score_text = render_text_with_outline(f"Final Score: {final_score}", font, WHITE, BLACK)
+    stars_text = render_text_with_outline(f"Total Stars: {total_stars}", font, WHITE, BLACK)
+    replay_text = render_text_with_outline("Press R to Replay", font, WHITE, BLACK)
 
-    for text, rect in [(game_over_text, game_over_rect), (score_text, score_rect), (replay_text, replay_rect)]:
-        bg = pygame.Surface((rect.width + 20, rect.height + 10))
-        bg.fill(BLACK)
-        bg.set_alpha(100)
-        screen.blit(bg, (rect.x - 10, rect.y - 5))
+    # Căn giữa và điều chỉnh khoảng cách đều
+    spacing = 70  # Khoảng cách giữa các dòng
+    start_y = WINDOW_HEIGHT // 3  # Vị trí bắt đầu từ 1/3 chiều cao màn hình
+
+    game_over_rect = game_over_text.get_rect(center=(WINDOW_WIDTH // 2, start_y))
+    score_rect = score_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + spacing))
+    stars_rect = stars_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + 2 * spacing))
+    replay_rect = replay_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + 3 * spacing))
+
+    # Vẽ chữ (bỏ khung chữ nhật màu đen)
+    for text, rect in [(game_over_text, game_over_rect), (score_text, score_rect),
+                       (stars_text, stars_rect), (replay_text, replay_rect)]:
         screen.blit(text, rect)
 
     pygame.display.flip()
@@ -1240,7 +1257,7 @@ def game_over_screen(final_score):
                     return True
     return False
 
-# chiến thắng
+# Chiến thắng
 def victory_screen(final_score, total_stars):
     pygame.mixer.music.stop()
     if victory_sound:
@@ -1252,22 +1269,34 @@ def victory_screen(final_score, total_stars):
     overlay.set_alpha(0)
     screen.blit(overlay, (0, 0))
 
-    victory_text = font_large.render("You Win!", True, YELLOW)
-    score_text = font.render(f"Final Score: {final_score}", True, WHITE)
-    stars_text = font.render(f"Total Stars: {total_stars}", True, WHITE)
-    replay_text = font.render("Press R to Replay, Q to Quit", True, WHITE)
+    # Hàm tạo chữ với viền để nổi bật
+    def render_text_with_outline(text, font, text_color, outline_color):
+        text_surface = font.render(text, True, text_color)
+        outline_surface = font.render(text, True, outline_color)
+        surface = pygame.Surface((text_surface.get_width() + 4, text_surface.get_height() + 4), pygame.SRCALPHA)
+        for dx, dy in [(2, 0), (-2, 0), (0, 2), (0, -2), (2, 2), (-2, -2), (2, -2), (-2, 2)]:  # 8 hướng viền
+            surface.blit(outline_surface, (dx + 2, dy + 2))
+        surface.blit(text_surface, (2, 2))
+        return surface
 
-    victory_rect = victory_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 3))
-    score_rect = score_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2))
-    stars_rect = stars_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + 40))
-    replay_rect = replay_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT * 2 // 3 + 20))
+    # Tạo các dòng chữ với viền
+    victory_text = render_text_with_outline("You Win!", font_large, YELLOW, GREEN)
+    score_text = render_text_with_outline(f"Final Score: {final_score}", font, WHITE, BLACK)
+    stars_text = render_text_with_outline(f"Total Stars: {total_stars}", font, WHITE, BLACK)
+    replay_text = render_text_with_outline("Press R to Replay, Q to Quit", font, WHITE, BLACK)
 
+    # Căn giữa và điều chỉnh khoảng cách đều
+    spacing = 70  # Khoảng cách giữa các dòng
+    start_y = WINDOW_HEIGHT // 3  # Vị trí bắt đầu từ 1/3 chiều cao màn hình
+
+    victory_rect = victory_text.get_rect(center=(WINDOW_WIDTH // 2, start_y-20))
+    score_rect = score_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + spacing))
+    stars_rect = stars_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + 2 * spacing))
+    replay_rect = replay_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + 3 * spacing))
+
+    # Vẽ chữ (bỏ khung chữ nhật màu đen)
     for text, rect in [(victory_text, victory_rect), (score_text, score_rect),
                        (stars_text, stars_rect), (replay_text, replay_rect)]:
-        bg = pygame.Surface((rect.width + 20, rect.height + 10))
-        bg.fill(BLACK)
-        bg.set_alpha(150)
-        screen.blit(bg, (rect.x - 10, rect.y - 5))
         screen.blit(text, rect)
 
     pygame.display.flip()
@@ -1333,7 +1362,7 @@ def draw_hud(score, difficulty, stage_info, player):
     pygame.draw.rect(screen, BLACK, (10, 250, 150, 12), 2)
 
 
-# giao diện chuyển màn chơi
+# Giao diện chuyển màn chơi
 def stage_transition_screen(completed_stage, next_stage, score):
     screen.blit(background4, (0, 0))
     overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -1341,24 +1370,36 @@ def stage_transition_screen(completed_stage, next_stage, score):
     overlay.set_alpha(100)
     screen.blit(overlay, (0, 0))
 
-    completed_text = font_large.render(f"Stage {completed_stage} Completed!", True, YELLOW)
-    next_text = font.render(f"Next: Stage {next_stage}", True, WHITE)
-    score_text = font.render(f"Score: {score}", True, WHITE)
-    stars_text = font.render(f"Total Stars: {total_stars}", True, WHITE)
-    continue_text = font_small.render("Press ENTER to Continue", True, WHITE)
+    # Hàm tạo chữ với viền để nổi bật
+    def render_text_with_outline(text, font, text_color, outline_color):
+        text_surface = font.render(text, True, text_color)
+        outline_surface = font.render(text, True, outline_color)
+        surface = pygame.Surface((text_surface.get_width() + 4, text_surface.get_height() + 4), pygame.SRCALPHA)
+        for dx, dy in [(2, 0), (-2, 0), (0, 2), (0, -2), (2, 2), (-2, -2), (2, -2), (-2, 2)]:  # 8 hướng viền
+            surface.blit(outline_surface, (dx + 2, dy + 2))
+        surface.blit(text_surface, (2, 2))
+        return surface
 
-    completed_rect = completed_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 3))
-    next_rect = next_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 - 20))
-    score_rect = score_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + 20))
-    stars_rect = stars_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + 60))
-    continue_rect = continue_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT * 2 // 3))
+    # Tạo các dòng chữ với viền
+    completed_text = render_text_with_outline(f"Stage {completed_stage} Completed!", font_large, YELLOW, GREEN)
+    next_text = render_text_with_outline(f"Next: Stage {next_stage}", font, WHITE, BLACK)
+    score_text = render_text_with_outline(f"Score: {score}", font, WHITE, BLACK)
+    stars_text = render_text_with_outline(f"Total Stars: {total_stars}", font, WHITE, BLACK)
+    continue_text = render_text_with_outline("Press ENTER to Continue", font_small, WHITE, BLACK)
 
+    # Căn giữa và điều chỉnh khoảng cách đều
+    spacing = 70  # Khoảng cách giữa các dòng
+    start_y = WINDOW_HEIGHT // 3  # Vị trí bắt đầu từ 1/3 chiều cao màn hình
+
+    completed_rect = completed_text.get_rect(center=(WINDOW_WIDTH // 2, start_y))
+    next_rect = next_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + spacing))
+    score_rect = score_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + 2 * spacing))
+    stars_rect = stars_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + 3 * spacing))
+    continue_rect = continue_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + 4 * spacing))
+
+    # Vẽ chữ (bỏ khung chữ nhật màu đen)
     for text, rect in [(completed_text, completed_rect), (next_text, next_rect),
                        (score_text, score_rect), (stars_text, stars_rect), (continue_text, continue_rect)]:
-        bg = pygame.Surface((rect.width + 20, rect.height + 10))
-        bg.fill(BLACK)
-        bg.set_alpha(150)
-        screen.blit(bg, (rect.x - 10, rect.y - 5))
         screen.blit(text, rect)
 
     pygame.display.flip()
@@ -1372,6 +1413,8 @@ def stage_transition_screen(completed_stage, next_stage, score):
                 if event.key == pygame.K_RETURN:
                     return True
     return False
+
+
 
 MAP_BACKGROUNDS = {
     "Me cung": r"asset\anh_backgound\map1.webp",
@@ -1455,7 +1498,7 @@ while running:
                 exit_pos = get_exit_position()
                 enemy = Enemy(enemy_pos[0], enemy_pos[1], player, algorithm, difficulty)
             else:
-                print("Vị trí cố định không hợp lệ, quay lại chọn ngẫu nhiên.")
+
                 player_pos = get_empty_position()
                 enemy_pos = get_empty_position()
                 while enemy_pos == player_pos:
@@ -1610,7 +1653,7 @@ while running:
         if running and not game_active:
             final_score = total_map_score + total_stars * 5
             if (check==0):
-                replay = game_over_screen(final_score)
+                replay = game_over_screen(final_score, total_stars)
                 if not replay:
                     running = False
                 else:
