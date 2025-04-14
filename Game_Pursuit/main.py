@@ -22,6 +22,7 @@ GRID_WIDTH =20
 GRID_HEIGHT = 20
 MAZE_WIDTH = GRID_WIDTH * GRID_SIZE  # 600
 MAZE_HEIGHT = GRID_HEIGHT * GRID_SIZE  # 600
+option_font = pygame.font.Font(None, 36)
 screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption("Pursuit Game")
 
@@ -40,6 +41,11 @@ LIGHT_GREEN = (150, 255, 150)
 YELLOW = (255, 255, 0)
 DARK_RED = (150, 0, 0)
 DARK_BLUE = (20, 20, 50)
+GREEN=(0,255,0)
+xanhnhat=(150, 255, 150)
+hongdam=(255, 20, 149)
+hongnhat=(253, 38, 252)
+
 
 # Thiết lập FPS
 clock = pygame.time.Clock()
@@ -89,9 +95,9 @@ MAPS = {
         [1, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 1],
         [1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1],
+        [1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1],
+        [1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
         [1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -148,7 +154,7 @@ MAPS = {
         [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1],
         [1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1],
     ],
     "Nha may": [
@@ -156,29 +162,29 @@ MAPS = {
         [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1],
         [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1],
         [1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1],
-        [1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1],
+        [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1],
         [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1],
         [1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1],
         [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1],
         [1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
-        [1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1],
+        [1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1],
         [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1],
         [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1],
-        [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1],
+        [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
         [1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1],
         [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
         [1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1],
         [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
-        [1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1],
+        [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1],
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1],
     ],
     "Thanh pho": [
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1],
         [1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1],
-        [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1],
-        [1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1],
+        [1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1],
+        [1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1],
         [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1],
         [1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1],
         [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1],
@@ -194,75 +200,75 @@ MAPS = {
         [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
         [1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1],
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1],
-    ],
-
-    # Stage 3 (Độ khó cao)
-    "Hang dong": [
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1],
-        [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1],
-        [1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1],
-        [1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1],
-        [1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1],
-        [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1],
-        [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1],
-        [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1],
-        [1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1],
-        [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1],
-        [1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1],
-        [1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1],
-        [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1],
-        [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1],
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1],
-    ],
-    "Cau truc": [
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1],
-        [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1],
-        [1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1],
-        [1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1],
-        [1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1],
-        [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1],
-        [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1],
-        [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1],
-        [1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1],
-        [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1],
-        [1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1],
-        [1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1],
-        [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1],
-        [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1],
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1],
-    ],
-    "La ma": [
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1],
-        [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1],
-        [1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1],
-        [1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1],
-        [1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1],
-        [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1],
-        [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1],
-        [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1],
-        [1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1],
-        [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1],
-        [1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1],
-        [1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1],
-        [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1],
-        [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1],
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1],
     ]
+
+    # # Stage 3 (Độ khó cao)
+    # "Hang dong": [
+    #     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    #     [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1],
+    #     [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1],
+    #     [1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1],
+    #     [1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1],
+    #     [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1],
+    #     [1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1],
+    #     [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1],
+    #     [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1],
+    #     [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1],
+    #     [1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1],
+    #     [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1],
+    #     [1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1],
+    #     [1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1],
+    #     [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1],
+    #     [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    #     [1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1],
+    #     [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    #     [1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1],
+    #     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1],
+    # ],
+    # "Cau truc": [
+    #     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    #     [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1],
+    #     [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1],
+    #     [1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1],
+    #     [1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1],
+    #     [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1],
+    #     [1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1],
+    #     [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1],
+    #     [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1],
+    #     [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1],
+    #     [1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1],
+    #     [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1],
+    #     [1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1],
+    #     [1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1],
+    #     [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1],
+    #     [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    #     [1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1],
+    #     [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    #     [1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1],
+    #     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1],
+    # ],
+    # "La ma": [
+    #     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    #     [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1],
+    #     [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1],
+    #     [1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1],
+    #     [1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1],
+    #     [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1],
+    #     [1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1],
+    #     [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1],
+    #     [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1],
+    #     [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1],
+    #     [1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1],
+    #     [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1],
+    #     [1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1],
+    #     [1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1],
+    #     [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1],
+    #     [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    #     [1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1],
+    #     [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    #     [1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1],
+    #     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1],
+    # ]
 }
 
 # Tải bản đồ
@@ -280,30 +286,43 @@ def get_empty_position():
 
 # Vẽ lưới
 def draw_grid(exit_pos=None):
-    pygame.draw.rect(screen, DARK_GRAY, (MAZE_OFFSET_X, MAZE_OFFSET_Y, MAZE_WIDTH, MAZE_HEIGHT), 5)
+    pygame.draw.rect(screen, DARK_GRAY, (MAZE_OFFSET_X, MAZE_OFFSET_Y, MAZE_WIDTH, MAZE_HEIGHT), 3)
     for y in range(GRID_HEIGHT):
         for x in range(GRID_WIDTH):
             rect = pygame.Rect(MAZE_OFFSET_X + x * GRID_SIZE, MAZE_OFFSET_Y + y * GRID_SIZE, GRID_SIZE, GRID_SIZE)
             if grid[y][x] == 1:
-                pygame.draw.rect(screen, GRAY, rect)
-                pygame.draw.rect(screen, DARK_GRAY, rect, 2)
+                #pygame.draw.rect(screen, GRAY, rect)
+                #pygame.draw.rect(screen, DARK_GRAY, rect, 2)
+                pass
             elif grid[y][x] == 2:  # Lối ra
                 pygame.draw.rect(screen, YELLOW, rect)
                 pygame.draw.rect(screen, BLACK, rect, 2)
-            elif grid[y][x] == 3:  # Tăng tốc (Speed Boost)
+            elif grid[y][x] == 3:  # Tăng tốc
                 pygame.draw.rect(screen, LIGHT_GREEN, rect)
                 screen.blit(speed_boost_img, (rect.x + 2.5, rect.y + 2.5))
-            elif grid[y][x] == 4:  # Làm chậm (Slow Enemy)
+            elif grid[y][x] == 4:  # Làm chậm
                 pygame.draw.rect(screen, LIGHT_GREEN, rect)
                 screen.blit(slow_enemy_img, (rect.x + 2.5, rect.y + 2.5))
-            elif grid[y][x] == 5:  # Tàng hình (Invisibility)
+            elif grid[y][x] == 5:  # Tàng hình
                 pygame.draw.rect(screen, LIGHT_GREEN, rect)
                 screen.blit(invisibility_img, (rect.x + 2.5, rect.y + 2.5))
-            elif grid[y][x] == 6:  # Gai (Spikes)
-                pygame.draw.rect(screen, LIGHT_GREEN, rect)  # Nền
-                screen.blit(spike_img, (rect.x + 2.5, rect.y + 2.5))  # Hiển thị hình ảnh gai
-            else:
+            elif grid[y][x] == 6:  # Gai
                 pygame.draw.rect(screen, LIGHT_GREEN, rect)
+                screen.blit(spike_img, (rect.x + 2.5, rect.y + 2.5))
+            elif grid[y][x] == 7:  # Trái bom
+                pygame.draw.rect(screen, LIGHT_GREEN, rect)
+                screen.blit(bomb_img, (rect.x + 2.5, rect.y + 2.5))
+            elif grid[y][x]==8:
+                pygame.draw.rect(screen, LIGHT_GREEN, rect)
+                screen.blit(heal_img, (rect.x+2.5, rect.y+2.5))
+            elif grid[y][x] == 9:  # Chìa khóa
+                pygame.draw.rect(screen, WHITE, rect)
+                screen.blit(key_img, (rect.x + 2.5, rect.y + 2.5))
+            elif grid[y][x] == 10:  # Ngôi sao
+                pygame.draw.rect(screen, LIGHT_GREEN, rect)
+                screen.blit(star_img, (rect.x + 2.5, rect.y + 2.5))
+            else:
+                pygame.draw.rect(screen, xanhnhat, rect)
             pygame.draw.rect(screen, BLACK, rect, 1)
 
 
@@ -313,7 +332,7 @@ def get_exit_position():
         for x in range(GRID_WIDTH):
             if grid[y][x] == 2:
                 return (x, y)
-    return None  # Nếu không tìm thấy (dự phòng)
+    return None
 
 # Chuyển đổi tọa độ
 def to_grid_pos(x, y):
@@ -322,16 +341,35 @@ def to_grid_pos(x, y):
 def to_pixel_pos(grid_x, grid_y):
     return (MAZE_OFFSET_X + grid_x * GRID_SIZE + GRID_SIZE // 2, MAZE_OFFSET_Y + grid_y * GRID_SIZE + GRID_SIZE // 2)
 
+
+
 # sinh vật phẩm ngẫu nhiên
 def spawn_items(grid, player_pos, enemy_pos, exit_pos, num_items=3, num_spikes=2):
-    """
-    Sinh ngẫu nhiên các vật phẩm và gai trên bản đồ.
-    - num_items: Số lượng vật phẩm (Speed Boost, Slow Enemy, Invisibility).
-    - num_spikes: Số lượng gai.
-    """
-    item_types = [3, 4, 5]  # 3: Speed Boost, 4: Slow Enemy, 5: Invisibility
+    item_types = [3, 4, 5, 7,8]
     placed_items = 0
     placed_spikes = 0
+    key_placed = False
+    stars_placed = 0
+
+    # Sinh chìa khóa trước
+    while not key_placed:
+        x = random.randint(0, GRID_WIDTH - 1)
+        y = random.randint(0, GRID_HEIGHT - 1)
+        pos = (x, y)
+        if (grid[y][x] == 0 and pos != player_pos and pos != enemy_pos and pos != exit_pos):
+            grid[y][x] = 9  # Giá trị cho chìa khóa
+            key_placed = True
+
+        # Sinh 3 ngôi sao
+        while stars_placed < 3:
+            x = random.randint(0, GRID_WIDTH - 1)
+            y = random.randint(0, GRID_HEIGHT - 1)
+            pos = (x, y)
+            if (grid[y][x] == 0 and pos != player_pos and pos != enemy_pos and pos != exit_pos):
+                grid[y][x] = 10  # Giá trị cho ngôi sao
+                stars_placed += 1
+
+
 
     # Sinh vật phẩm
     while placed_items < num_items:
@@ -343,7 +381,7 @@ def spawn_items(grid, player_pos, enemy_pos, exit_pos, num_items=3, num_spikes=2
             grid[y][x] = item_type
             placed_items += 1
 
-    # Sinh gai
+    # Sinh gai (giữ nguyên)
     while placed_spikes < num_spikes:
         x = random.randint(0, GRID_WIDTH - 1)
         y = random.randint(0, GRID_HEIGHT - 1)
@@ -351,6 +389,7 @@ def spawn_items(grid, player_pos, enemy_pos, exit_pos, num_items=3, num_spikes=2
         if (grid[y][x] == 0 and pos != player_pos and pos != enemy_pos and pos != exit_pos):
             grid[y][x] = 6  # Gai
             placed_spikes += 1
+
 
 
 # Các hàm thuật toán
@@ -361,7 +400,7 @@ def heuristic(a, b):
 # BFS
 def bfs_search(start, goal):
     queue = deque([start])
-    came_from = {start: None}
+    came_from = {start: None} # từ điển, lưu vt hiện tại và vt trước đó
     visited = {start}
 
     while queue:
@@ -500,6 +539,7 @@ def ida_star_search(start, goal):
 class Player(pygame.sprite.Sprite):
     def __init__(self, grid_x, grid_y):
         super().__init__()
+
         self.image = pygame.Surface((20, 20), pygame.SRCALPHA)
         pygame.draw.circle(self.image, YELLOW, (10, 5), 5)
         pygame.draw.circle(self.image, BLACK, (8, 4), 1)
@@ -509,50 +549,125 @@ class Player(pygame.sprite.Sprite):
         pygame.draw.line(self.image, BLUE, (12, 10), (16, 12), 2)
         pygame.draw.line(self.image, BLUE, (9, 16), (9, 20), 2)
         pygame.draw.line(self.image, BLUE, (11, 16), (11, 20), 2)
+
         self.rect = self.image.get_rect()
         self.grid_pos = [grid_x, grid_y]
         self.pixel_pos = list(to_pixel_pos(grid_x, grid_y))
         self.rect.center = self.pixel_pos
-        self.speed = 5
-        self.default_speed = 5
+
+        # tốc độ người chơi
+        self.speed = 3
+        self.default_speed = 3
         self.speed_boost_timer = 0
+
+        # sức khỏe người chơi
         self.slow_timer = 0  # Thời gian bị làm chậm bởi gai
         self.health = 100  # Máu tối đa
         self.max_health = 100
         self.health_cooldown = 0  # Thời gian hồi để không bị trừ máu liên tục
         self.original_image = self.image.copy()
+
+        # bomb
         self.blink_timer = 0
+        self.bombs = 0  # Số lượng bom trong giỏ đồ
+        self.b_key_pressed = False
 
+        # chia khoa
+        self.has_key = False  # Người chơi chưa có chìa khóa
+        self.unlock_timer = 0  # Thời gian mở cửa
+        self.show_key_message_timer = 0  # Timer cho thông báo thiếu chìa khóa
+
+        # ngôi sao
+        self.stars_collected = 0 # Số ngôi sao đã nhặt trong map hiện tại
+
+
+    # nhặt ngôi sao
+    def pick_star(self):
+        self.stars_collected += 1
+        global total_stars
+        total_stars += 1  # Cộng dồn vào biến toàn cục
+        if pickup_sound:
+            pickup_sound.play()
+
+    # nhặt chìa khóa
+    def pick_key(self):
+        self.has_key = True
+        if pickup_sound:
+            pickup_sound.play()
+
+    # hàm thêm bomb
+    def add_bomb(self):
+        self.bombs += 1
+        if pickup_sound:
+            pickup_sound.play()
+
+    # hàm sử dụng bomb
+    def use_bomb(self):
+        if self.bombs > 0:
+            self.bombs -= 1
+            if bomb_sound:
+                bomb_sound.play()
+
+            # Tạo hiệu ứng nổ tại vị trí người chơi
+            explosion = Explosion(self.pixel_pos[0], self.pixel_pos[1])
+            all_sprites.add(explosion)  # Thêm vào nhóm sprite
+
+            # Phá hủy tường trong phạm vi 3x3, trừ các bức tường ngoài
+            px, py = self.grid_pos
+            for dy in range(-1, 2):  # -1, 0, 1
+                for dx in range(-1, 2):  # -1, 0, 1
+                    nx, ny = px + dx, py + dy
+                    # Kiểm tra xem ô có nằm trong lưới và không phải là tường ngoài
+                    if (0 <= nx < GRID_WIDTH and 0 <= ny < GRID_HEIGHT and grid[ny][nx] == 1):
+                        # Chỉ phá hủy nếu không phải tường ngoài
+                        if not (nx == 0 or nx == GRID_WIDTH - 1 or ny == 0 or ny == GRID_HEIGHT - 1):
+                            grid[ny][nx] = 0  # Phá tường thành đường đi
+
+    # tăng tốc
     def activate_speed_boost(self):
-        self.speed = 8
-        self.speed_boost_timer = 10 * FPS
+        self.speed = 5
+        self.speed_boost_timer = 5 * FPS
+        if pickup_sound:
+            pickup_sound.play()
 
+    # chạm vào gai
     def hit_spike(self):
         if self.health_cooldown <= 0:  # Chỉ trừ máu nếu không trong thời gian hồi
-            self.health -= 10  # Trừ 20 máu khi chạm gai
+            self.health -= 20  # Trừ 20 máu khi chạm gai
             self.speed = 3  # Làm chậm
             self.slow_timer = 5 * FPS  # Làm chậm trong 5 giây
-            self.health_cooldown = 1 * FPS  # Hồi 1 giây trước khi bị trừ máu tiếp
-            self.blink_timer = 1 * FPS
+            self.health_cooldown = 1 * FPS  # thời gian hồi máu
+            self.blink_timer = 1 * FPS # thời gian nhấp nháy
             if spike_sound:
                 spike_sound.play()
             if self.health < 0:
                 self.health = 0
 
+    # hồi máu
+    def heal (self, amount=30):
+        self.health= min(self.max_health, self.health+amount)
+        if pickup_sound:
+            pickup_sound.play()
+
+
     def update(self):
+        # trở về tốc độ ban đầu sau khi tăng tốc
         if self.speed_boost_timer > 0:
             self.speed_boost_timer -= 1
             if self.speed_boost_timer <= 0:
                 self.speed = self.default_speed
 
+        # trở về tốc độ ban đầu sau khi làm chậm
         if self.slow_timer > 0:
             self.slow_timer -= 1
             if self.slow_timer <= 0:
                 self.speed = self.default_speed
 
+        # giảm thời gian hồi phục
         if self.health_cooldown > 0:
             self.health_cooldown -= 1
 
+        # giảm thời gian nhấp nháy
         if self.blink_timer > 0:
             self.blink_timer -= 1
             if self.blink_timer % 10 < 5:  # Nhấp nháy
@@ -562,6 +677,16 @@ class Player(pygame.sprite.Sprite):
         else:
             self.image.set_alpha(255)
 
+        # Xử lý thời gian mở cửa
+        if self.unlock_timer > 0:
+            self.unlock_timer -= 1
+
+
+        # Xử lý thời gian hiển thị thông báo thiếu chìa khóa
+        if self.show_key_message_timer > 0:
+            self.show_key_message_timer -= 1
+
+        # ấn phím, di chuyển của nhân vật
         keys = pygame.key.get_pressed()
         target_grid_x, target_grid_y = self.grid_pos[0], self.grid_pos[1]
         if keys[pygame.K_LEFT]:
@@ -587,6 +712,8 @@ class Player(pygame.sprite.Sprite):
                abs(self.pixel_pos[1] - target_pixel_pos[1]) < self.speed:
                 self.pixel_pos = list(target_pixel_pos)
                 self.grid_pos = [target_grid_x, target_grid_y]
+
+        # hình chữ nhật người chơi
         self.rect.center = (int(self.pixel_pos[0]), int(self.pixel_pos[1]))
 
 
@@ -594,56 +721,74 @@ class Player(pygame.sprite.Sprite):
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, grid_x, grid_y, player, algorithm, difficulty):
         super().__init__()
+
+        # vẽ quái vật
         self.image = pygame.Surface((20, 20), pygame.SRCALPHA)
-        pygame.draw.circle(self.image, DARK_RED, (10, 10), 8)
+        pygame.draw.circle(self.image, hongdam, (10, 10), 8)
         for angle in range(0, 360, 45):
             rad = math.radians(angle)
             x1, y1 = 10, 10
             x2 = x1 + math.cos(rad) * 10
             y2 = y1 + math.sin(rad) * 10
-            pygame.draw.line(self.image, RED, (x1, y1), (x2, y2), 2)
+            pygame.draw.line(self.image, hongnhat, (x1, y1), (x2, y2), 2)
         pygame.draw.circle(self.image, WHITE, (8, 8), 2)
         pygame.draw.circle(self.image, WHITE, (12, 8), 2)
         pygame.draw.circle(self.image, BLACK, (8, 8), 1)
         pygame.draw.circle(self.image, BLACK, (12, 8), 1)
+
+        # vị trí và thông tin khởi tạo
         self.rect = self.image.get_rect()
         self.grid_pos = (grid_x, grid_y)
         self.rect.center = to_pixel_pos(grid_x, grid_y)
         self.player = player
         self.algorithm = algorithm
+        self.exit_pos = exit_pos  # Lưu vị trí lối ra
         self.path = []
         self.move_timer = 0
+
+        # cài đặt độ trễ
         if difficulty == "Easy":
             self.move_delay = 30
         elif difficulty == "Medium":
-            self.move_delay = 15
+            self.move_delay = 25
         else:
-            self.move_delay = 5
+            self.move_delay = 20
         self.default_move_delay = self.move_delay
         self.slow_timer = 0
         self.invisibility_timer = 0
 
+    # trạng thái làm chậm
     def activate_slow(self):
         self.move_delay = self.default_move_delay * 2  # Làm chậm
-        self.slow_timer = 10 * FPS  # 10 giây
+        self.slow_timer = 5 * FPS  # 5 giây
+        if pickup_sound:
+            pickup_sound.play()
 
+    # trạng thái tàng hình
     def activate_invisibility(self):
         self.invisibility_timer = 5 * FPS  # 5 giây
+        if pickup_sound:
+            pickup_sound.play()
+
 
     def update(self):
+        # đặt lại tốc độ bình thường sau khi hết làm chậm
         if self.slow_timer > 0:
             self.slow_timer -= 1
             if self.slow_timer <= 0:
                 self.move_delay = self.default_move_delay
 
+        # đặt lại trạng thái bình thường sau khi hết tàng hình
         if self.invisibility_timer > 0:
             self.invisibility_timer -= 1
 
         self.move_timer += 1
         if self.move_timer >= self.move_delay:
             self.move_timer = 0
+
+            # nếu người chơi đang tàn hình
             if self.invisibility_timer > 0:
-                # Di chuyển ngẫu nhiên khi người chơi tàng hình
+                # Di chuyển ngẫu nhiên
                 directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
                 random.shuffle(directions)
                 for dx, dy in directions:
@@ -653,7 +798,20 @@ class Enemy(pygame.sprite.Sprite):
                         self.grid_pos = next_pos
                         self.rect.center = to_pixel_pos(next_pos[0], next_pos[1])
                         break
+
+            # nếu người chơi không tàn hình
             else:
+                # tính khoảng cách đến người chơi và lối ra
+                player_dist= heuristic(self.grid_pos, tuple(self.player.grid_pos))
+                exit_dist= heuristic(self.grid_pos, self.exit_pos)
+                player_to_exit_dist= heuristic(tuple(self.player.grid_pos), self.exit_pos)
+
+                # Logic thông minh cho A* và IDA*
+                if self.algorithm in ["A*", "IDA*"] and player_dist>10 and player_to_exit_dist >5:
+                    target_pos= self.exit_pos # chặn lối ra nếu người chơi xa
+                else:
+                    target_pos=tuple(self.player.grid_pos)
+
                 player_grid_pos = tuple(self.player.grid_pos)
                 if self.algorithm == "BFS":
                     self.path = bfs_search(self.grid_pos, player_grid_pos)
@@ -663,10 +821,14 @@ class Enemy(pygame.sprite.Sprite):
                     self.path = a_star_search(self.grid_pos, player_grid_pos)
                 elif self.algorithm == "IDA*":
                     self.path = ida_star_search(self.grid_pos, player_grid_pos)
+
+                # nếu có đường đi thì di chuyển đến bước tiếp theo
                 if len(self.path) > 1:
                     next_pos = self.path[1]
                     self.grid_pos = next_pos
                     self.rect.center = to_pixel_pos(next_pos[0], next_pos[1])
+
+                # nếu không có đường đi thì di chuyển ngẫu nhiên
                 elif len(self.path) == 0:
                     directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
                     random.shuffle(directions)
@@ -679,6 +841,7 @@ class Enemy(pygame.sprite.Sprite):
                             break
 
 
+<<<<<<< HEAD
 background_frames = []
 try:
     cap = cv2.VideoCapture(r"D:\MonHoc\N2_HK2\AI\PROJECTAINE\Game_Pursuit\Game_Pursuit\asset\anh_background\BG1.mp4")
@@ -701,23 +864,54 @@ except Exception as e:
     background = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
     background.fill((50, 150, 50))
     background_frames = [background]
+=======
+
+
+
+>>>>>>> 3a52b35661c6af9abbd2014e3a01f93e72e27be9
 
 # Tải hình nền kết thúc game
 try:
-    background2 = pygame.image.load(r"asset\anh_backgound\anhdep.jpg").convert()
+    background2 = pygame.image.load(r"asset\anh_backgound\ketthucgame.png").convert()
     background2 = pygame.transform.smoothscale(background2, (WINDOW_WIDTH, WINDOW_HEIGHT))  # Dùng smoothscale cho chất lượng tốt hơn
 except:
     background2 = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
     background2.fill((50, 150, 50))
 
+# Tải hình nền chiến thắng game
+try:
+    background3 = pygame.image.load(r"asset\anh_backgound\chienthanggame.png").convert()
+    background3 = pygame.transform.smoothscale(background3, (WINDOW_WIDTH, WINDOW_HEIGHT))  # Dùng smoothscale cho chất lượng tốt hơn
+except:
+    background3 = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+    background3.fill((50, 150, 50))
+
+# Tải hình nền chuyển level
+try:
+    background4 = pygame.image.load(r"asset\anh_backgound\anhdep.jpg").convert()
+    background4 = pygame.transform.smoothscale(background4, (WINDOW_WIDTH, WINDOW_HEIGHT))  # Dùng smoothscale cho chất lượng tốt hơn
+except:
+    background4 = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+    background4.fill((50, 150, 50))
+
 # tải ảnh vật phẩm
 try:
-    speed_boost_img = pygame.image.load(r"asset\anh_icon\Giay.jpg").convert_alpha()# giay tang toc
-    speed_boost_img = pygame.transform.scale(speed_boost_img, (GRID_SIZE - 5, GRID_SIZE - 5))  # Thu nhỏ để vừa ô
-    slow_enemy_img = pygame.image.load(r"asset\anh_icon\lonuoc2.png").convert_alpha() # lo nuoc lam cham quai vat
+    # giay tang toc
+    speed_boost_img = pygame.image.load(r"asset\anh_icon\Giay.jpg").convert_alpha()
+    speed_boost_img = pygame.transform.scale(speed_boost_img, (GRID_SIZE - 5, GRID_SIZE - 5))
+
+    # lo nuoc lam cham
+    slow_enemy_img = pygame.image.load(r"asset\anh_icon\lonuoc2.png").convert_alpha()
     slow_enemy_img = pygame.transform.scale(slow_enemy_img, (GRID_SIZE - 5, GRID_SIZE - 5))
-    invisibility_img = pygame.image.load(r"asset\anh_icon\aochoang1.png").convert_alpha() # ao choang tang hinh
+
+    # ao choang tang hinh
+    invisibility_img = pygame.image.load(r"asset\anh_icon\aochoang1.png").convert_alpha()
     invisibility_img = pygame.transform.scale(invisibility_img, (GRID_SIZE - 5, GRID_SIZE - 5))
+
+    # hoi mau
+    heal_img = pygame.image.load(r"asset\anh_icon\hoimau.png").convert_alpha()
+    heal_img = pygame.transform.scale(heal_img, (GRID_SIZE - 5, GRID_SIZE - 5))
+
 except pygame.error as e:
     print(f"Không thể tải hình ảnh vật phẩm: {e}")
     # Dùng hình mặc định nếu không tải được
@@ -727,11 +921,13 @@ except pygame.error as e:
     slow_enemy_img.fill(WHITE)
     invisibility_img = pygame.Surface((GRID_SIZE - 5, GRID_SIZE - 5), pygame.SRCALPHA)
     invisibility_img.fill((128, 0, 128))
+    heal_img = pygame.Surface((GRID_SIZE - 5, GRID_SIZE - 5), pygame.SRCALPHA)
+    pygame.draw.circle(heal_img, (0, 255, 0), (12.5, 12.5), 12)
 
 # Tải hình ảnh gai
 try:
     spike_img = pygame.image.load(r"asset\anh_icon\bay.png").convert_alpha()
-    spike_img = pygame.transform.scale(spike_img, (GRID_SIZE - 5, GRID_SIZE - 5))  # Thu nhỏ để vừa ô (25x25)
+    spike_img = pygame.transform.scale(spike_img, (GRID_SIZE - 5, GRID_SIZE - 5))
 except Exception as e:
     print(f"Không thể tải hình ảnh gai: {e}")
     # Nếu không tải được, dùng hình mặc định (vẽ thủ công)
@@ -743,6 +939,37 @@ except Exception as e:
         x2 = x1 + math.cos(rad) * 12
         y2 = y1 + math.sin(rad) * 12
         pygame.draw.line(spike_img, RED, (x1, y1), (x2, y2), 2)
+
+
+# Tải hình ảnh trái bom
+try:
+    bomb_img = pygame.image.load(r"asset\anh_icon\traibom.jpg").convert_alpha()
+    bomb_img = pygame.transform.scale(bomb_img, (GRID_SIZE - 5, GRID_SIZE - 5))
+except Exception as e:
+    print(f"Không thể tải hình ảnh trái bom: {e}")
+    bomb_img = pygame.Surface((GRID_SIZE - 5, GRID_SIZE - 5), pygame.SRCALPHA)
+    pygame.draw.circle(bomb_img, (100, 0, 0), (12.5, 12.5), 12)  # Hình mặc định
+
+
+# tải hình ảnh tường
+WALL_TEXTURE = pygame.image.load(r"asset/anh_icon/gach3.jpg").convert()
+WALL_TEXTURE = pygame.transform.scale(WALL_TEXTURE, (MAZE_WIDTH, MAZE_HEIGHT))
+
+
+# Tải hình ảnh chìa khóa (thêm vào phần tải tài nguyên)
+try:
+    key_img = pygame.image.load(r"asset\anh_icon\chiakhoa.png").convert_alpha()
+    key_img = pygame.transform.scale(key_img, (GRID_SIZE - 5, GRID_SIZE - 5))
+except Exception as e:
+    print(f"Không thể tải hình ảnh chìa khóa: {e}")
+
+
+# tải ảnh ngôi sao
+try:
+    star_img = pygame.image.load(r"asset\anh_icon\ngoisao.png").convert_alpha()
+    star_img = pygame.transform.scale(star_img, (GRID_SIZE - 5, GRID_SIZE - 5))
+except Exception as e:
+    print(f"Không thể tải hình ảnh ngôi sao: {e}")
 
 # tai am thanh nhat vat pham
 try:
@@ -763,6 +990,7 @@ try:
 except:
     collision_sound = None
 
+
 # tai am thanh chien thang
 try:
     victory_sound = pygame.mixer.Sound(r"asset\nhac\nhac_chien_thang.mp3")
@@ -771,10 +999,199 @@ except Exception as e:
     victory_sound = None
 
 
+# Tải âm thanh nổ bom
+try:
+    bomb_sound = pygame.mixer.Sound(r"asset\nhac\tieng_bom.mp3")
+except Exception as e:
+    print(f"Không thể tải âm thanh nổ bom: {e}")
+    bomb_sound = None
 
-# Menu chọn thuật toán, chế độ chơi và bản đồ (cập nhật kích thước)
+
+# class hieu ung no bom
+class Explosion(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.images = []
+
+        # load ảnh bomb nổ
+        for i in range(5):
+            try:
+                img = pygame.image.load(f"asset/anh_icon/explosion/frame_{i}.png").convert_alpha()
+                img = pygame.transform.scale(img, (GRID_SIZE * 3, GRID_SIZE * 3))
+                self.images.append(img)
+            except pygame.error as e:
+                print(f"Không thể tải frame_{i}.png: {e}")
+                break
+
+        self.index = 0
+        self.image = self.images[self.index]
+        self.rect = self.image.get_rect(center=(x, y))
+        self.frame_rate = 5
+        self.frame_counter = 0
+
+    def remove_background(self, surface, color, threshold=50):
+        """
+        Loại bỏ màu nền (color) khỏi surface, với ngưỡng (threshold) để xác định màu gần giống.
+        """
+        # Tạo một surface mới với alpha channel
+        new_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
+        new_surface.blit(surface, (0, 0))
+
+        # Lấy dữ liệu pixel
+        pixel_array = pygame.PixelArray(new_surface)
+        target_r, target_g, target_b = color
+
+        # Duyệt qua từng pixel
+        for x in range(new_surface.get_width()):
+            for y in range(new_surface.get_height()):
+                pixel_color = new_surface.unmap_rgb(pixel_array[x, y])
+                r, g, b, a = pixel_color.r, pixel_color.g, pixel_color.b, pixel_color.a
+
+                # Tính khoảng cách màu (Euclidean distance trong không gian RGB)
+                color_distance = ((r - target_r) ** 2 + (g - target_g) ** 2 + (b - target_b) ** 2) ** 0.5
+
+                # Nếu màu gần với màu cam mục tiêu, làm trong suốt
+                if color_distance < threshold:
+                    pixel_array[x, y] = (0, 0, 0, 0)  # Trong suốt (alpha = 0)
+
+        del pixel_array
+        return new_surface
+
+    def update(self):
+        self.frame_counter += 1
+        if self.frame_counter >= self.frame_rate:
+            self.frame_counter = 0
+            self.index += 1
+            if self.index >= len(self.images):
+                self.kill()
+            else:
+                self.image = self.images[self.index]
+
+
+
+# màn hình khởi động
+def splash_screen():
+    # Tải ảnh nền
+    try:
+        splash_image = pygame.image.load(r"asset\anh_backgound\anhnen.png").convert()
+        splash_image = pygame.transform.smoothscale(splash_image, (WINDOW_WIDTH, WINDOW_HEIGHT))
+    except Exception as e:
+        print(f"Không thể tải splash_screen.png: {e}")
+        splash_image = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+        splash_image.fill(DARK_BLUE)
+        text = font_large.render("Pursuit Game", True, YELLOW)
+        text_rect = text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2))
+        splash_image.blit(text, text_rect)
+
+    # Tạo bề mặt cho quả cầu
+    ball_size = 50  # Kích thước quả cầu
+    ball_surface = pygame.Surface((ball_size, ball_size), pygame.SRCALPHA)
+
+    # Vẽ quả cầu (màu xanh trùng với đường đi)
+    pygame.draw.circle(ball_surface, (0, 255, 0), (ball_size // 2, ball_size // 2), ball_size // 2)  # Màu xanh
+
+
+    # Vẽ lưới màu trắng
+    center_x, center_y = ball_size // 2, ball_size // 2
+    radius = ball_size // 2
+
+    # Vẽ các đường kinh tuyến (dọc)
+    for angle in range(0, 360, 30):  # Mỗi 30 độ
+        rad = math.radians(angle)
+        x1 = center_x + radius * math.cos(rad)
+        y1 = center_y + radius * math.sin(rad)
+        x2 = center_x - radius * math.cos(rad)
+        y2 = center_y - radius * math.sin(rad)
+        pygame.draw.line(ball_surface, (255, 255, 255), (x1, y1), (x2, y2), 2)
+
+    # Vẽ các đường vĩ tuyến (ngang)
+    for r in range(radius // 3, radius, radius // 3):  # 2 vòng vĩ tuyến
+        pygame.draw.circle(ball_surface, (255, 255, 255), (center_x, center_y), r, 2)
+
+    # Vẽ thêm một vài đường chéo để tăng chi tiết
+    pygame.draw.line(ball_surface, (255, 255, 255), (center_x - radius, center_y - radius // 2),
+                     (center_x + radius, center_y + radius // 2), 2)
+    pygame.draw.line(ball_surface, (255, 255, 255), (center_x - radius, center_y + radius // 2),
+                     (center_x + radius, center_y - radius // 2), 2)
+
+    # Tạo đường đi màu xanh (danh sách các điểm tọa độ)
+    path = []
+    for x in range(50, WINDOW_WIDTH - 50, 5):
+        y = WINDOW_HEIGHT - 50 + 20 * math.sin(x * 0.02)  # Đường cong sin
+        path.append((x, y))
+
+    # Thời gian hiển thị splash screen
+    splash_duration = 7 * 1000  # 7 giây
+
+    # Tính tốc độ để quả cầu đi hết đường trong 7 giây
+    total_path_length = len(path)  # Tổng số điểm trên đường đi
+    total_frames = (splash_duration / 1000) * FPS  # Tổng số khung hình trong 7 giây
+    ball_speed = total_path_length / total_frames  # Tốc độ để đi hết đường đúng 7 giây
+
+    start_time = pygame.time.get_ticks()
+    path_index = 0  # Chỉ số điểm hiện tại trên đường đi
+    rotation_angle = 0  # Góc xoay của quả cầu
+    rotation_speed = 360 / total_path_length * ball_speed  # Tốc độ xoay (độ/frame)
+
+    running = True
+    while running:
+        current_time = pygame.time.get_ticks()
+        if current_time - start_time >= splash_duration:
+            break
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+            if event.type == pygame.KEYDOWN:
+                break
+
+        # Cập nhật vị trí quả cầu
+        path_index += ball_speed
+        if path_index >= len(path):
+            path_index = len(path) - 1  # Dừng ở điểm cuối
+
+        # Cập nhật góc xoay để tạo hiệu ứng lăn
+        rotation_angle += rotation_speed
+        if rotation_angle >= 360:
+            rotation_angle -= 360  # Giữ góc trong khoảng 0-360
+
+        # Xoay quả cầu
+        rotated_ball = pygame.transform.rotate(ball_surface, rotation_angle)
+        rotated_rect = rotated_ball.get_rect(center=(ball_size // 2, ball_size // 2))
+
+        # Vẽ splash screen
+        screen.blit(splash_image, (0, 0))
+
+        # Vẽ đường đi màu xanh đến vị trí hiện tại của quả cầu
+        current_path_index = int(path_index)
+        if current_path_index > 0:
+            pygame.draw.lines(screen, (0, 255, 0), False, path[:current_path_index + 1], 7)  # Đường màu xanh
+
+        # Vẽ quả cầu tại vị trí hiện tại
+        ball_pos = path[int(path_index)]
+        screen.blit(rotated_ball, (ball_pos[0] - rotated_rect.width // 2, ball_pos[1] - rotated_rect.height // 2))
+
+        pygame.display.flip()
+        clock.tick(FPS)
+
+    return True
+
+
+
+# Menu chọn thuật toán, chế độ chơi và bản đồ
 def menu_screen():
-    # Tải và phát nhạc cho menu
+    menu_active = True
+    difficulty_options = ["Easy", "Medium", "Hard"]
+    selected_difficulty = 0
+
+    try:
+        menu_background = pygame.image.load(r"asset\anh_backgound\anh8.png").convert()
+        menu_background = pygame.transform.scale(menu_background, (WINDOW_WIDTH, WINDOW_HEIGHT))
+    except Exception as e:
+        print(f"Không thể tải menu_background.png: {e}")
+        menu_background = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+        menu_background.fill(DARK_BLUE)
+
     try:
         pygame.mixer.music.stop()
         pygame.mixer.music.load(r"asset\nhac\nhac_giao_dien.mp3")
@@ -782,129 +1199,82 @@ def menu_screen():
     except:
         print("Không thể tải menu_music.mp3")
 
-    # Danh sách thuật toán
-    uninformed_algorithms = ["BFS", "IDS"]
-    informed_algorithms = ["A*", "IDA*"]
-    all_algorithms = uninformed_algorithms + informed_algorithms  # Hợp nhất để chọn
-    difficulties = ["Easy", "Medium", "Hard"]
+    title_font = pygame.font.Font(None, 74)
+    option_font = pygame.font.Font(None, 50)
 
-    selected_idx = 0  # Chỉ số thuật toán được chọn (trong all_algorithms)
-    selected_difficulty = 0
-    selecting = "algorithm"  # Chọn thuật toán trước, rồi độ khó
+    while menu_active:
+        screen.blit(menu_background, (0, 0))
+        title_text = title_font.render("Pursuit Game", True, YELLOW)
+        title_shadow = title_font.render("Pursuit Game", True, BLACK)
+        title_rect = title_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 4))
 
-    while True:
-        screen.blit(background, (0, 0))
-        overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
-        #overlay.fill(DARK_BLUE)
-        overlay.set_alpha(200)
-        screen.blit(overlay, (0, 0))
+        # Vẽ bóng (lệch xuống dưới và sang phải 3 pixel)
+        screen.blit(title_shadow, title_rect.move(3, 3))
 
-        # Tiêu đề game
-        title = font_large.render("Pursuit Game", True, WHITE)
-        title_rect = title.get_rect(center=(WINDOW_WIDTH // 2, 60))
-        title_bg = pygame.Surface((title_rect.width + 20, title_rect.height + 10))
-        title_bg.fill(BLACK)
-        title_bg.set_alpha(150)
-        screen.blit(title_bg, (title_rect.x - 10, title_rect.y - 5))
-        screen.blit(title, title_rect)
+        screen.blit(title_text, title_rect)
 
-        # Nhóm Uninformed Search
-        uninformed_text = font.render("Uninformed Search:", True, WHITE)
-        uninformed_rect = uninformed_text.get_rect(center=(WINDOW_WIDTH // 2, 110))
-        uninformed_bg = pygame.Surface((uninformed_rect.width + 20, uninformed_rect.height + 10))
-        uninformed_bg.fill(BLACK)
-        uninformed_bg.set_alpha(150)
-        screen.blit(uninformed_bg, (uninformed_rect.x - 10, uninformed_rect.y - 5))
-        screen.blit(uninformed_text, uninformed_rect)
 
-        for i, algo in enumerate(uninformed_algorithms):
-            color = YELLOW if (selecting == "algorithm" and selected_idx == i) else WHITE
-            text = font_small.render(algo, True, color)
-            text_rect = text.get_rect(center=(WINDOW_WIDTH // 2, 150 + i * 30))
-            if selecting == "algorithm" and selected_idx == i:
-                pygame.draw.rect(screen, YELLOW, text_rect.inflate(20, 10), 2)
+        for i, difficulty in enumerate(difficulty_options):
+            color = YELLOW if i == selected_difficulty else WHITE
+            text = option_font.render(difficulty, True, color)
+            text_rect = text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + i * 60))
             screen.blit(text, text_rect)
 
-        # Nhóm Informed Search
-        informed_text = font.render("Informed Search:", True, WHITE)
-        informed_rect = informed_text.get_rect(center=(WINDOW_WIDTH // 2, 220))
-        informed_bg = pygame.Surface((informed_rect.width + 20, informed_rect.height + 10))
-        informed_bg.fill(BLACK)
-        informed_bg.set_alpha(150)
-        screen.blit(informed_bg, (informed_rect.x - 10, informed_rect.y - 5))
-        screen.blit(informed_text, informed_rect)
-
-        for i, algo in enumerate(informed_algorithms):
-            global_idx = i + len(uninformed_algorithms)  # Chỉ số trong all_algorithms
-            color = YELLOW if (selecting == "algorithm" and selected_idx == global_idx) else WHITE
-            text = font_small.render(algo, True, color)
-            text_rect = text.get_rect(center=(WINDOW_WIDTH // 2, 260 + i * 30))
-            if selecting == "algorithm" and selected_idx == global_idx:
-                pygame.draw.rect(screen, YELLOW, text_rect.inflate(20, 10), 2)
-            screen.blit(text, text_rect)
-
-        # Chọn độ khó
-        diff_text = font.render("Select Difficulty:", True, WHITE)
-        diff_rect = diff_text.get_rect(center=(WINDOW_WIDTH // 2, 350))
-        diff_bg = pygame.Surface((diff_rect.width + 20, diff_rect.height + 10))
-        diff_bg.fill(BLACK)
-        diff_bg.set_alpha(150)
-        screen.blit(diff_bg, (diff_rect.x - 10, diff_rect.y - 5))
-        screen.blit(diff_text, diff_rect)
-
-        for i, diff in enumerate(difficulties):
-            color = YELLOW if (selecting == "difficulty" and i == selected_difficulty) else WHITE
-            text = font_small.render(diff, True, color)
-            text_rect = text.get_rect(center=(WINDOW_WIDTH // 2, 380 + i * 30))
-            if selecting == "difficulty" and i == selected_difficulty:
-                pygame.draw.rect(screen, YELLOW, text_rect.inflate(20, 10), 2)
-            screen.blit(text, text_rect)
 
         pygame.display.flip()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                return None, None  # Trả về None nếu thoát
-            if event.type == pygame.KEYDOWN:
-                if selecting == "algorithm":
-                    if event.key == pygame.K_UP:
-                        selected_idx = (selected_idx - 1) % len(all_algorithms)
-                    elif event.key == pygame.K_DOWN:
-                        selected_idx = (selected_idx + 1) % len(all_algorithms)
-                    elif event.key == pygame.K_RETURN:
-                        selected_algorithm = all_algorithms[selected_idx]
-                        selecting = "difficulty"
-                elif selecting == "difficulty":
-                    if event.key == pygame.K_UP:
-                        selected_difficulty = (selected_difficulty - 1) % len(difficulties)
-                    elif event.key == pygame.K_DOWN:
-                        selected_difficulty = (selected_difficulty + 1) % len(difficulties)
-                    elif event.key == pygame.K_RETURN:
-                        return selected_algorithm, difficulties[selected_difficulty]  # Trả về thuật toán và độ khó
+                return None
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_UP:
+                    selected_difficulty = (selected_difficulty - 1) % len(difficulty_options)
+                elif event.key == pygame.K_DOWN:
+                    selected_difficulty = (selected_difficulty + 1) % len(difficulty_options)
+                elif event.key == pygame.K_RETURN:
+                    return difficulty_options[selected_difficulty]
+                elif event.key == pygame.K_ESCAPE:
+                    return None
 
+    return None
 
-# Game Over (cập nhật kích thước)
-def game_over_screen(final_score):
-    pygame.mixer.music.stop()  # Dừng nhạc gameplay
+# Game Over
+def game_over_screen(final_score, total_stars):
+    pygame.mixer.music.stop()
     screen.blit(background2, (0, 0))
     overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
     overlay.fill(DARK_BLUE)
-    overlay.set_alpha(120)
+    overlay.set_alpha(40)
     screen.blit(overlay, (0, 0))
 
-    game_over_text = font_large.render("Game Over!", True, RED)
-    score_text = font.render(f"Final Score: {final_score}", True, WHITE)
-    replay_text = font.render("Press R to Replay", True, WHITE)
+    # Hàm tạo chữ với viền để nổi bật
+    def render_text_with_outline(text, font, text_color, outline_color):
+        text_surface = font.render(text, True, text_color)
+        outline_surface = font.render(text, True, outline_color)
+        surface = pygame.Surface((text_surface.get_width() + 4, text_surface.get_height() + 4), pygame.SRCALPHA)
+        for dx, dy in [(2, 0), (-2, 0), (0, 2), (0, -2), (2, 2), (-2, -2), (2, -2), (-2, 2)]:  # 8 hướng viền
+            surface.blit(outline_surface, (dx + 2, dy + 2))
+        surface.blit(text_surface, (2, 2))
+        return surface
 
-    game_over_rect = game_over_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 3))
-    score_rect = score_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2))
-    replay_rect = replay_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT * 2 // 3 + 20))
+    # Tạo các dòng chữ với viền
+    game_over_text = render_text_with_outline("Game Over!", font_large, WHITE, RED)
+    score_text = render_text_with_outline(f"Final Score: {final_score}", font, WHITE, BLACK)
+    stars_text = render_text_with_outline(f"Total Stars: {total_stars}", font, WHITE, BLACK)
+    replay_text = render_text_with_outline("Press R to Replay", font, WHITE, BLACK)
 
-    for text, rect in [(game_over_text, game_over_rect), (score_text, score_rect), (replay_text, replay_rect)]:
-        bg = pygame.Surface((rect.width + 20, rect.height + 10))
-        bg.fill(BLACK)
-        bg.set_alpha(100)
-        screen.blit(bg, (rect.x - 10, rect.y - 5))
+    # Căn giữa và điều chỉnh khoảng cách đều
+    spacing = 70  # Khoảng cách giữa các dòng
+    start_y = WINDOW_HEIGHT // 3  # Vị trí bắt đầu từ 1/3 chiều cao màn hình
+
+    game_over_rect = game_over_text.get_rect(center=(WINDOW_WIDTH // 2, start_y))
+    score_rect = score_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + spacing))
+    stars_rect = stars_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + 2 * spacing))
+    replay_rect = replay_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + 3 * spacing))
+
+    # Vẽ chữ (bỏ khung chữ nhật màu đen)
+    for text, rect in [(game_over_text, game_over_rect), (score_text, score_rect),
+                       (stars_text, stars_rect), (replay_text, replay_rect)]:
         screen.blit(text, rect)
 
     pygame.display.flip()
@@ -919,30 +1289,46 @@ def game_over_screen(final_score):
                     return True
     return False
 
-def victory_screen(final_score):
-    pygame.mixer.music.stop()  # Dừng nhạc nền
-    if victory_sound:  # Phát âm thanh chiến thắng
+# Chiến thắng
+def victory_screen(final_score, total_stars):
+    pygame.mixer.music.stop()
+    if victory_sound:
         victory_sound.play()
 
-    screen.blit(background2, (0, 0))
+    screen.blit(background3, (0, 0))
     overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
     overlay.fill(DARK_BLUE)
-    overlay.set_alpha(100)
+    overlay.set_alpha(0)
     screen.blit(overlay, (0, 0))
 
-    victory_text = font_large.render("You Win!", True, YELLOW)
-    score_text = font.render(f"Final Score: {final_score}", True, WHITE)
-    replay_text = font.render("Press R to Replay", True, WHITE)
+    # Hàm tạo chữ với viền để nổi bật
+    def render_text_with_outline(text, font, text_color, outline_color):
+        text_surface = font.render(text, True, text_color)
+        outline_surface = font.render(text, True, outline_color)
+        surface = pygame.Surface((text_surface.get_width() + 4, text_surface.get_height() + 4), pygame.SRCALPHA)
+        for dx, dy in [(2, 0), (-2, 0), (0, 2), (0, -2), (2, 2), (-2, -2), (2, -2), (-2, 2)]:  # 8 hướng viền
+            surface.blit(outline_surface, (dx + 2, dy + 2))
+        surface.blit(text_surface, (2, 2))
+        return surface
 
-    victory_rect = victory_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 3))
-    score_rect = score_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2))
-    replay_rect = replay_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT * 2 // 3 + 20))
+    # Tạo các dòng chữ với viền
+    victory_text = render_text_with_outline("You Win!", font_large, YELLOW, GREEN)
+    score_text = render_text_with_outline(f"Final Score: {final_score}", font, WHITE, BLACK)
+    stars_text = render_text_with_outline(f"Total Stars: {total_stars}", font, WHITE, BLACK)
+    replay_text = render_text_with_outline("Press R to Replay, Q to Quit", font, WHITE, BLACK)
 
-    for text, rect in [(victory_text, victory_rect), (score_text, score_rect), (replay_text, replay_rect)]:
-        bg = pygame.Surface((rect.width + 20, rect.height + 10))
-        bg.fill(BLACK)
-        bg.set_alpha(150)
-        screen.blit(bg, (rect.x - 10, rect.y - 5))
+    # Căn giữa và điều chỉnh khoảng cách đều
+    spacing = 70  # Khoảng cách giữa các dòng
+    start_y = WINDOW_HEIGHT // 3  # Vị trí bắt đầu từ 1/3 chiều cao màn hình
+
+    victory_rect = victory_text.get_rect(center=(WINDOW_WIDTH // 2, start_y-20))
+    score_rect = score_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + spacing))
+    stars_rect = stars_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + 2 * spacing))
+    replay_rect = replay_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + 3 * spacing))
+
+    # Vẽ chữ (bỏ khung chữ nhật màu đen)
+    for text, rect in [(victory_text, victory_rect), (score_text, score_rect),
+                       (stars_text, stars_rect), (replay_text, replay_rect)]:
         screen.blit(text, rect)
 
     pygame.display.flip()
@@ -954,65 +1340,98 @@ def victory_screen(final_score):
                 return False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:
+                    if victory_sound:
+                        victory_sound.stop()
                     return True
+                elif event.key == pygame.K_q:
+                    if victory_sound:
+                        victory_sound.stop()
+                    return False
     return False
 
 
-# Vẽ bảng thông tin (HUD) (đặt bên ngoài mê cung, bên phải)
-def draw_hud(score, algorithm, difficulty, map_name, player):
-    hud_width = 220
-    hud_height = 180  # Tăng chiều cao để chứa thanh máu
-    hud = pygame.Surface((hud_width, hud_height))
-    hud.fill(DARK_BLUE)
-    hud.set_alpha(200)
+# Vẽ bảng thông tin
+def draw_hud(score, difficulty, stage_info, player):
+    hud_font = pygame.font.Font(None, 36)
 
-    hud_x = MAZE_OFFSET_X + MAZE_WIDTH + 20
-    hud_y = MAZE_OFFSET_Y + 10
-    screen.blit(hud, (hud_x, hud_y))
+    # Điểm số map hiện tại
+    score_text = hud_font.render(f"Map Score: {score}", True, WHITE)
+    screen.blit(score_text, (10, 40))
 
-    score_text = font.render(f"Score: {score}", True, WHITE)
-    algo_text = font_small.render(f"Algorithm: {algorithm}", True, WHITE)
-    diff_text = font_small.render(f"Difficulty: {difficulty}", True, WHITE)
-    map_text = font_small.render(f"Map: {map_name}", True, WHITE)
-    health_text = font_small.render(f"Health: {player.health}", True, WHITE)
+    # Độ khó
+    difficulty_text = hud_font.render(f"Difficulty: {difficulty}", True, WHITE)
+    screen.blit(difficulty_text, (10, 70))
 
-    screen.blit(score_text, (hud_x + 10, hud_y + 10))
-    screen.blit(algo_text, (hud_x + 10, hud_y + 40))
-    screen.blit(diff_text, (hud_x + 10, hud_y + 70))
-    screen.blit(map_text, (hud_x + 10, hud_y + 100))
-    screen.blit(health_text, (hud_x + 10, hud_y + 130))
+    # Stage và Map
+    stage_text = hud_font.render(stage_info, True, WHITE)
+    screen.blit(stage_text, (10, 100))
 
-    # Vẽ thanh máu
-    health_bar_width = 150
-    health_bar_height = 10
-    health_ratio = player.health / player.max_health
-    pygame.draw.rect(screen, RED, (hud_x + 10, hud_y + 150, health_bar_width, health_bar_height))  # Nền thanh máu
-    pygame.draw.rect(screen, (0, 255, 0), (hud_x + 10, hud_y + 150, health_bar_width * health_ratio, health_bar_height))  # Thanh máu
-    pygame.draw.rect(screen, BLACK, (hud_x + 10, hud_y + 150, health_bar_width, health_bar_height), 2)  # Viền
+    # Thuật toán hiện tại
+    current_stage = int(stage_info.split("Stage ")[1].split(":")[0]) - 1
+    map_name = stage_info.split(": ")[1]
+    map_idx = STAGES[current_stage].index(map_name)
+    algorithm = STAGE_ALGORITHMS[current_stage][map_idx]
+    algorithm_text = hud_font.render(f"Enemy AI: {algorithm}", True, WHITE)
+    screen.blit(algorithm_text, (10, 130))
 
+    # Số bom
+    bomb_text = hud_font.render(f"Bombs: {player.bombs}", True, WHITE)
+    screen.blit(bomb_text, (10, 160))
+
+    # Trạng thái chìa khóa
+    key = "Yes" if player.has_key else "No"
+    key_text = font.render(f"KEY: {key}", True, WHITE)
+    screen.blit(key_text, (10, 190))
+
+    # Tổng số ngôi sao
+    stars_text = font.render(f"Total Stars: {total_stars}", True, WHITE)
+    screen.blit(stars_text, (10, 220))
+
+    # Thanh máu
+    pygame.draw.rect(screen, RED, (10, 250, 150, 12))
+    health_width = (player.health / player.max_health) * 150
+    pygame.draw.rect(screen, GREEN, (10, 250, health_width, 12))
+    pygame.draw.rect(screen, BLACK, (10, 250, 150, 12), 2)
+
+
+# Giao diện chuyển màn chơi
 def stage_transition_screen(completed_stage, next_stage, score):
-    screen.blit(background2, (0, 0))  # Dùng hình nền chiến thắng
+    screen.blit(background4, (0, 0))
     overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
     overlay.fill(DARK_BLUE)
     overlay.set_alpha(100)
     screen.blit(overlay, (0, 0))
 
-    completed_text = font_large.render(f"Stage {completed_stage} Completed!", True, YELLOW)
-    next_text = font.render(f"Next: Stage {next_stage}", True, WHITE)
-    score_text = font.render(f"Score: {score}", True, WHITE)
-    continue_text = font_small.render("Press ENTER to Continue", True, WHITE)
+    # Hàm tạo chữ với viền để nổi bật
+    def render_text_with_outline(text, font, text_color, outline_color):
+        text_surface = font.render(text, True, text_color)
+        outline_surface = font.render(text, True, outline_color)
+        surface = pygame.Surface((text_surface.get_width() + 4, text_surface.get_height() + 4), pygame.SRCALPHA)
+        for dx, dy in [(2, 0), (-2, 0), (0, 2), (0, -2), (2, 2), (-2, -2), (2, -2), (-2, 2)]:  # 8 hướng viền
+            surface.blit(outline_surface, (dx + 2, dy + 2))
+        surface.blit(text_surface, (2, 2))
+        return surface
 
-    completed_rect = completed_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 3))
-    next_rect = next_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 - 20))
-    score_rect = score_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + 20))
-    continue_rect = continue_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT * 2 // 3))
+    # Tạo các dòng chữ với viền
+    completed_text = render_text_with_outline(f"Stage {completed_stage} Completed!", font_large, YELLOW, GREEN)
+    next_text = render_text_with_outline(f"Next: Stage {next_stage}", font, WHITE, BLACK)
+    score_text = render_text_with_outline(f"Score: {score}", font, WHITE, BLACK)
+    stars_text = render_text_with_outline(f"Total Stars: {total_stars}", font, WHITE, BLACK)
+    continue_text = render_text_with_outline("Press ENTER to Continue", font_small, WHITE, BLACK)
 
+    # Căn giữa và điều chỉnh khoảng cách đều
+    spacing = 70  # Khoảng cách giữa các dòng
+    start_y = WINDOW_HEIGHT // 3  # Vị trí bắt đầu từ 1/3 chiều cao màn hình
+
+    completed_rect = completed_text.get_rect(center=(WINDOW_WIDTH // 2, start_y))
+    next_rect = next_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + spacing))
+    score_rect = score_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + 2 * spacing))
+    stars_rect = stars_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + 3 * spacing))
+    continue_rect = continue_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + 4 * spacing))
+
+    # Vẽ chữ (bỏ khung chữ nhật màu đen)
     for text, rect in [(completed_text, completed_rect), (next_text, next_rect),
-                       (score_text, score_rect), (continue_text, continue_rect)]:
-        bg = pygame.Surface((rect.width + 20, rect.height + 10))
-        bg.fill(BLACK)
-        bg.set_alpha(150)
-        screen.blit(bg, (rect.x - 10, rect.y - 5))
+                       (score_text, score_rect), (stars_text, stars_rect), (continue_text, continue_rect)]:
         screen.blit(text, rect)
 
     pygame.display.flip()
@@ -1027,29 +1446,43 @@ def stage_transition_screen(completed_stage, next_stage, score):
                     return True
     return False
 
+
+
 MAP_BACKGROUNDS = {
-    "Me cung": r"asset\anh_backgound\anh.webp",
-    "Can ho": r"asset\anh_backgound\anh4.jpg",
-    "Khach san": r"asset\anh_backgound\anhgame3.png",
-    "Rung sau": r"asset\anh_backgound\rung_sau.jpg",  # Thêm hình nền mới
-    "Nha may": r"asset\anh_backgound\nha_may.jpg",
-    "Thanh pho": r"asset\anh_backgound\thanh_pho.jpg",
-    "Hang dong": r"asset\anh_backgound\hang_dong.jpg",
-    "Cau truc": r"asset\anh_backgound\cau_truc.jpg",
-    "La ma": r"asset\anh_backgound\la_ma.jpg",
+    "Me cung": r"asset\anh_backgound\map1.webp",
+    "Can ho": r"asset\anh_backgound\map2.jpg",
+    "Khach san": r"asset\anh_backgound\map3.png",
+    "Rung sau": r"asset\anh_backgound\map4.jpg",
+    "Nha may": r"asset\anh_backgound\map5.png",
+    "Thanh pho": r"asset\anh_backgound\map6.jpg",
+    # "Hang dong": r"asset\anh_backgound\hang_dong.jpg",
+    # "Cau truc": r"asset\anh_backgound\cau_truc.jpg",
+    # "La ma": r"asset\anh_backgound\la_ma.jpg",
 }
-## Định nghĩa các màn chơi
+# Định nghĩa các màn chơi
 STAGES = [
-    ["Me cung", "Can ho", "Khach san"],  # Stage 1
-    ["Rung sau", "Nha may", "Thanh pho"],  # Stage 2
-    ["Hang dong", "Cau truc", "La ma"],   # Stage 3
+    ["Me cung", "Can ho"],  # Stage 1
+    ["Khach san", "Rung sau"],  # Stage 2
+    ["Nha may", "Thanh pho"],   # Stage 3
 ]
+
+STAGE_ALGORITHMS = [
+    ["BFS", "IDS"],   # Stage 0: Uninformed Search
+    ["A*", "IDA*"],   # Stage 1: Informed Search
+    ["A*", "IDA*"],   # Stage 2: Informed Search (tạm thời, có thể thay sau)
+]
+
 
 # Vòng lặp game chính
 running = True
 while running:
-    algorithm, difficulty = menu_screen()
-    if algorithm is None:
+    check=0
+    # Hiển thị splash screen
+    if not splash_screen():
+        break  # Thoát game nếu người dùng đóng cửa sổ trong splash screen
+
+    difficulty = menu_screen()
+    if difficulty is None:
         break
 
     try:
@@ -1059,7 +1492,8 @@ while running:
     except:
         print("Không thể tải gameplay_music.mp3")
 
-    score = 0
+    total_map_score = 0  # Tổng điểm của tất cả các map
+    total_stars = 0  # Tổng ngôi sao qua tất cả các map
     current_stage = 0
     game_active = True
 
@@ -1070,6 +1504,9 @@ while running:
         while game_active and current_map_idx < len(map_order):
             # Tải bản đồ
             load_map(map_order[current_map_idx])
+
+            # Chọn thuật toán dựa trên stage và map
+            algorithm = STAGE_ALGORITHMS[current_stage][current_map_idx]
 
             # Tải hình nền tương ứng với bản đồ
             try:
@@ -1083,23 +1520,54 @@ while running:
             all_sprites = pygame.sprite.Group()
             enemies = pygame.sprite.Group()
 
-            player_pos = get_empty_position()
-            player = Player(player_pos[0], player_pos[1])
+            # Vị trí cố định cho người chơi và quái vật
+            player_pos = (1, 1)
+            enemy_pos = (18, 1)
 
-            enemy_pos = get_empty_position()
-            while enemy_pos == player_pos:
+            # Kiểm tra xem vị trí có hợp lệ không
+            if grid[player_pos[1]][player_pos[0]] != 1 and grid[enemy_pos[1]][enemy_pos[0]] != 1:
+                player = Player(player_pos[0], player_pos[1])
+                exit_pos = get_exit_position()
+                enemy = Enemy(enemy_pos[0], enemy_pos[1], player, algorithm, difficulty)
+            else:
+
+                player_pos = get_empty_position()
                 enemy_pos = get_empty_position()
-            enemy = Enemy(enemy_pos[0], enemy_pos[1], player, algorithm, difficulty)
+                while enemy_pos == player_pos:
+                    enemy_pos = get_empty_position()
+                player = Player(player_pos[0], player_pos[1])
+                exit_pos = get_exit_position()
+                enemy = Enemy(enemy_pos[0], enemy_pos[1], player, algorithm, difficulty)
 
             all_sprites.add(player, enemy)
             enemies.add(enemy)
 
-            exit_pos = get_exit_position()
+            # Khởi tạo quái vật
+            num_enemies = 0
+            if (difficulty == "Medium" or difficulty == "Hard") and current_stage > 0:
+                num_enemies += current_stage
 
-            # Điều chỉnh số lượng vật phẩm và gai theo độ khó của màn
-            num_items = max(3 - current_stage, 1)  # Giảm vật phẩm khi màn tăng
-            num_spikes = 2 + current_stage  # Tăng gai khi màn tăng
+            enemy_positions = []
+            for _ in range(num_enemies):
+                enemy_pos = get_empty_position()
+                while (enemy_pos == player_pos or enemy_pos == exit_pos or
+                       enemy_pos in enemy_positions):
+                    enemy_pos = get_empty_position()
+                enemy_positions.append(enemy_pos)
+                enemy = Enemy(enemy_pos[0], enemy_pos[1], player, algorithm, difficulty)
+                all_sprites.add(enemy)
+                enemies.add(enemy)
+
+            # Điều chỉnh số lượng vật phẩm và gai
+            num_items = max(10 - current_stage, 1)
+            num_spikes = 4 + current_stage
             spawn_items(grid, player_pos, enemy_pos, exit_pos, num_items=num_items, num_spikes=num_spikes)
+
+            # Khởi tạo điểm số cho map hiện tại
+            map_score = 100  # Điểm bắt đầu từ 100
+            time_elapsed = 0  # Thời gian đã trôi qua (tính bằng frame)
+            score_decrement_interval = 5 * FPS
+            decrement_amount = 5  # Trừ 5 điểm
 
             while game_active:
                 clock.tick(FPS)
@@ -1107,50 +1575,104 @@ while running:
                     if event.type == pygame.QUIT:
                         game_active = False
                         running = False
+                    elif event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_b:
+                            player.use_bomb()
 
                 all_sprites.update()
-                score += 1
 
+                # Cập nhật thời gian và điểm số
+                time_elapsed += 1
+                if time_elapsed % score_decrement_interval == 0:
+                    map_score = max(0, map_score - decrement_amount)  # Trừ điểm, không âm
+
+                # Vẽ mọi thứ
+                screen.blit(game_background, (0, 0))
+                screen.blit(WALL_TEXTURE, (MAZE_OFFSET_X, MAZE_OFFSET_Y))
+                draw_grid(exit_pos)
+                all_sprites.draw(screen)
+                draw_hud(map_score, difficulty, f"Stage {current_stage + 1}: {map_order[current_map_idx]}", player)
+
+                # Hiển thị thông báo khi đang mở cửa
+                if player.unlock_timer > 0:
+                    unlock_text = font.render(f"Opening door... {player.unlock_timer // FPS + 1}s", True, WHITE)
+                    screen.blit(unlock_text, (WINDOW_WIDTH // 2 - 100, WINDOW_HEIGHT - 50))
+
+                # Hiển thị thông báo thiếu chìa khóa
+                if player.show_key_message_timer > 0:
+                    need_key_text = font.render("You need a key to exit!", True, RED)
+                    screen.blit(need_key_text, (WINDOW_WIDTH // 2 - 100, WINDOW_HEIGHT - 50))
+
+                pygame.display.flip()
+
+                # Xử lý va chạm với quái vật
                 if pygame.sprite.spritecollide(player, enemies, False):
                     if collision_sound:
                         collision_sound.play()
                     game_active = False
 
+                # Xử lý lối ra
                 if tuple(player.grid_pos) == exit_pos:
+                    if player.has_key:
+                        if player.unlock_timer == 0:
+                            player.unlock_timer = 5 * FPS
+                    else:
+                        if player.show_key_message_timer == 0:
+                            player.show_key_message_timer = 1 * FPS
+                else:
+                    if player.unlock_timer > 0:
+                        player.unlock_timer = 0
+
+                # Kiểm tra nếu cửa đã mở xong
+                if player.unlock_timer <= 1 and tuple(player.grid_pos) == exit_pos and player.has_key:
+                    player.has_key = False  # Hủy khóa
+                    total_map_score += map_score  # Cộng điểm map hiện tại vào tổng
                     current_map_idx += 1
                     if current_map_idx >= len(map_order):
                         if current_stage + 1 < len(STAGES):
-                            # Hiển thị giao diện chuyển màn
-                            continue_game = stage_transition_screen(current_stage + 1, current_stage + 2, score)
+                            continue_game = stage_transition_screen(current_stage + 1, current_stage + 2, total_map_score + total_stars * 5)
                             if not continue_game:
                                 running = False
                                 game_active = False
                             current_stage += 1
                         else:
-                            # Đã hoàn thành tất cả các stage
-                            replay = victory_screen(score)
-                            if not replay:
+                            final_score = total_map_score + total_stars * 5
+                            replay = victory_screen(final_score, total_stars)  # Truyền total_stars
+                            if replay:
+                                game_active = False
+                                check=1
+                                total_map_score = 0
+                                total_stars = 0  # Reset khi chơi lại
+                                current_stage = 0
+                                break
+                            else:
                                 running = False
-                            game_active = False
+                                game_active = False
+                                break
                     break
 
+                # Xử lý vật phẩm
                 player_grid_x, player_grid_y = player.grid_pos
                 item = grid[player_grid_y][player_grid_x]
-                if item in [3, 4, 5, 6]:
+                if item in [3, 4, 5, 6, 7, 8, 9, 10]:
                     if item == 3:
                         player.activate_speed_boost()
-                        if pickup_sound:
-                            pickup_sound.play()
                     elif item == 4:
-                        enemy.activate_slow()
-                        if pickup_sound:
-                            pickup_sound.play()
+                        for enemy in enemies:
+                            enemy.activate_slow()
                     elif item == 5:
-                        enemy.activate_invisibility()
-                        if pickup_sound:
-                            pickup_sound.play()
+                        for enemy in enemies:
+                            enemy.activate_invisibility()
                     elif item == 6:
                         player.hit_spike()
+                    elif item == 7:
+                        player.add_bomb()
+                    elif item == 8:
+                        player.heal(20)
+                    elif item == 9:
+                        player.pick_key()
+                    elif item == 10:
+                        player.pick_star()
                     if item != 6:
                         grid[player_grid_y][player_grid_x] = 0
 
@@ -1159,16 +1681,26 @@ while running:
                         collision_sound.play()
                     game_active = False
 
-                screen.blit(game_background, (0, 0))
-                draw_grid(exit_pos)
-                all_sprites.draw(screen)
-                # Hiển thị stage trong HUD
-                draw_hud(score, algorithm, difficulty, f"Stage {current_stage + 1}: {map_order[current_map_idx]}", player)
-                pygame.display.flip()
+        # Xử lý game over
+        if running and not game_active:
+            final_score = total_map_score + total_stars * 5
+            if (check==0):
+                replay = game_over_screen(final_score, total_stars)
+                if not replay:
+                    running = False
+                else:
+                    total_map_score = 0
+                    current_stage = 0
+                    break
+            else:
+                replay = True
+                if not replay:
+                    running = False
+                else:
+                    total_map_score = 0
+                    current_stage = 0
+                    break
 
-        if running and not game_active and current_stage < len(STAGES):
-            replay = game_over_screen(score)
-            if not replay:
-                running = False
+
 
 pygame.quit()
