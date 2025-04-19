@@ -1532,7 +1532,7 @@ def victory_screen(final_score, total_stars):
 
     # Tạo các dòng chữ với viền
     victory_text = render_text_with_outline("You Win!", font_large, YELLOW, GREEN)
-    score_text = render_text_with_outline(f"Final Score: {final_score}", font, WHITE, BLACK)
+    score_text = render_text_with_outline(f"Final Sco re: {final_score}", font, WHITE, BLACK)
     stars_text = render_text_with_outline(f"Total Stars: {total_stars}", font, WHITE, BLACK)
     replay_text = render_text_with_outline("Press R to Replay, Q to Quit", font, WHITE, BLACK)
 
