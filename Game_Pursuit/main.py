@@ -1,9 +1,9 @@
 import json
-import time
-
+from time import time
 import pygame
 import random
 import heapq
+from heapq import heappush, heappop
 import math
 from collections import deque
 import matplotlib.pyplot as plt
@@ -402,6 +402,7 @@ def spawn_items(grid, player_pos, enemy_pos, exit_pos, num_items=3, num_spikes=2
 def heuristic(a, b):
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
+
 # BFS
 def bfs_search(start, goal):
     queue = deque([start])
@@ -570,6 +571,131 @@ def ida_star_search(start, goal):
             print("IDA* không tìm thấy đường đi")  # Debug
             return []
         threshold = new_threshold
+
+
+# --- Thuật toán Simulated Annealing ---
+def get_neighbors(pos):
+    x, y = pos
+    neighbors = [(x+1, y), (x-1, y), (x, y+1), (x, y-1)]
+    return [(nx, ny) for nx, ny in neighbors if 0 <= nx < GRID_WIDTH and 0 <= ny < GRID_HEIGHT and grid[ny][nx] != 1]
+
+def manhattan_distance(pos1, pos2):
+    return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
+
+
+
+
+def simulated_annealing_search(start, goal):
+    max_iterations = 400  # Tăng nhẹ từ 300 để có thêm cơ hội hội tụ
+    initial_temp = 50     # Giảm từ 100 để giảm ngẫu nhiên ban đầu
+    cooling_rate = 0.9995 # Giữ để hội tụ nhanh
+    current_path = [start]
+    current_pos = start
+    best_path = current_path[:]
+    best_cost = manhattan_distance(start, goal)
+    temp = initial_temp
+    last_good_path = best_path[:]  # Lưu đường đi tốt
+
+    # Khởi tạo đường đi ban đầu dựa trên heuristic
+    for _ in range(50):  # 50 bước khởi tạo để tiến gần mục tiêu
+        neighbors = get_neighbors(current_pos)
+        if not neighbors:
+            break
+        # Chọn hàng xóm tốt nhất
+        neighbors_with_cost = [(n, manhattan_distance(n, goal)) for n in neighbors]
+        neighbors_with_cost.sort(key=lambda x: x[1])
+        next_pos = neighbors_with_cost[0][0]
+        current_path.append(next_pos)
+        current_pos = next_pos
+        new_cost = manhattan_distance(next_pos, goal)
+        if new_cost < best_cost:
+            best_path = current_path[:]
+            best_cost = new_cost
+            last_good_path = best_path[:]
+        if current_pos == goal:
+            print(f"Đạt mục tiêu trong giai đoạn khởi tạo: {best_path}")  # Debug
+            return best_path
+
+    # Giai đoạn Simulated Annealing
+    for i in range(max_iterations):
+        if current_pos == goal:
+            print(f"Đạt mục tiêu ở vòng lặp {i}: {best_path}")  # Debug
+            return best_path
+        neighbors = get_neighbors(current_pos)
+        if not neighbors:
+            print(f"Không có hàng xóm tại {current_pos}, dùng last_good_path")  # Debug
+            break
+
+        # Ưu tiên hàng xóm gần mục tiêu (90% chọn tốt nhất)
+        neighbors_with_cost = [(n, manhattan_distance(n, goal)) for n in neighbors]
+        neighbors_with_cost.sort(key=lambda x: x[1])
+        if random.random() < 0.9:  # 90% chọn tốt nhất, giảm ngẫu nhiên
+            next_pos = neighbors_with_cost[0][0]
+        else:
+            next_pos = random.choice(neighbors)
+
+        new_path = current_path + [next_pos]
+        new_cost = manhattan_distance(next_pos, goal)
+
+        # Chấp nhận bước mới nếu tốt hơn hoặc theo xác suất
+        if new_cost <= best_cost or random.random() < math.exp((best_cost - new_cost) / temp):
+            current_path = new_path
+            current_pos = next_pos
+            if new_cost < best_cost:
+                best_path = new_path[:]
+                best_cost = new_cost
+                last_good_path = best_path[:]
+                print(f"Cải thiện đường đi ở vòng lặp {i}, cost: {best_cost}, path: {best_path}")  # Debug
+            elif new_cost == best_cost:
+                last_good_path = new_path[:]  # Giữ đường đi tương đương
+        temp *= cooling_rate
+
+    # Kiểm tra và trả về đường đi
+    if best_path[-1] == goal:
+        print(f"Trả về best_path đạt mục tiêu: {best_path}")  # Debug
+        return best_path
+    elif last_good_path and len(last_good_path) > 1 and manhattan_distance(last_good_path[-1], goal) < manhattan_distance(start, goal):
+        print(f"Trả về last_good_path tiến gần mục tiêu: {last_good_path}")  # Debug
+        return last_good_path
+    else:
+        # Dự phòng BFS
+        bfs_path = bfs_search(start, goal)
+        print(f"Simulated Annealing thất bại, dùng BFS: {bfs_path}")  # Debug
+        return bfs_path if bfs_path else last_good_path
+
+
+
+
+
+
+# --- Thuật toán Beam Search ---
+def beam_search(start, goal):
+    start_time = time()
+    beam_width = 5
+    queue = [(manhattan_distance(start, goal), [start])]
+    visited = set()
+
+    while queue:
+        new_queue = []
+        for _ in range(min(len(queue), beam_width)):
+            if not queue:
+                break
+            _, path = heappop(queue)
+            current = path[-1]
+            if current == goal:
+                return path
+            if current in visited:
+                continue
+            visited.add(current)
+            for neighbor in get_neighbors(current):
+                if neighbor not in visited:
+                    new_path = path + [neighbor]
+                    heappush(new_queue, (manhattan_distance(neighbor, goal), new_path))
+        queue = new_queue
+    path = bfs_search(start, goal)  # Dùng BFS làm dự phòng
+    return path
+
+
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, grid_x, grid_y):
@@ -781,10 +907,11 @@ class Enemy(pygame.sprite.Sprite):
         self.algorithm = algorithm
         self.difficulty = difficulty
         self.path = []
+        self.last_path = []  # Bộ đệm đường đi
         self.target_pixel_pos = self.pixel_pos[:]
         self.moving = False
         self.path_update_timer = 0
-        self.path_update_interval = FPS // 10  # Cập nhật đường đi 10 lần/giây
+        self.path_update_interval = FPS // 5  # Cập nhật 5 lần/giây, tăng từ FPS // 10
 
         # Điều chỉnh tốc độ dựa trên độ khó
         if difficulty == "Easy":
@@ -846,6 +973,7 @@ class Enemy(pygame.sprite.Sprite):
             else:
                 # Đuổi theo người chơi
                 target_pos = tuple(self.player.grid_pos)
+                start_time = time()
                 print(f"Mục tiêu: {target_pos}, thuật toán: {self.algorithm}")  # Debug
                 if self.algorithm == "BFS":
                     self.path = bfs_search(tuple(self.grid_pos), target_pos)
@@ -855,6 +983,19 @@ class Enemy(pygame.sprite.Sprite):
                     self.path = a_star_search(tuple(self.grid_pos), target_pos)
                 elif self.algorithm == "IDA*":
                     self.path = ida_star_search(tuple(self.grid_pos), target_pos)
+                elif self.algorithm == "Simulated Annealing":
+                    self.path = simulated_annealing_search(tuple(self.grid_pos), target_pos)
+                elif self.algorithm == "Beam Search":
+                    self.path = beam_search(tuple(self.grid_pos), target_pos)
+
+                # Lưu đường đi tốt hoặc sử dụng đường đi cũ
+                if self.path and len(self.path) > 1:
+                    self.last_path = self.path[:]
+                    print(f"Đường đi mới: {self.path}")  # Debug
+                else:
+                    self.path = self.last_path[:] if self.last_path else []
+                    print(f"Không tìm thấy đường đi mới, sử dụng last_path: {self.path}")  # Debug
+
 
                 # Kiểm tra đường đi hợp lệ
                 if len(self.path) > 1:
@@ -863,11 +1004,9 @@ class Enemy(pygame.sprite.Sprite):
                     if 0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT and grid[y][x] != 1:
                         self.target_pixel_pos = list(to_pixel_pos(next_grid_pos[0], next_grid_pos[1]))
                         self.moving = True
-                        print(f"Đường đi mới: {self.path}")  # Debug
                     else:
-                        self.path = []
-                        self.moving = False
-                        print(f"Đường đi chứa ô tường tại ({x}, {y})")  # Debug
+                        self.path = self.last_path[:] if self.last_path else []
+                        print(f"Đường đi chứa ô tường tại ({x}, {y}), sử dụng last_path")  # Debug
                 else:
                     # Thử di chuyển ngẫu nhiên nếu không có đường đi
                     directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
@@ -882,13 +1021,14 @@ class Enemy(pygame.sprite.Sprite):
                             print(f"Không có đường đi, chọn ngẫu nhiên đến {next_pos}")  # Debug
                             break
                     else:
+                        self.moving = False
                         print("Không tìm thấy ô hợp lệ")  # Debug
 
         # Di chuyển mượt mà đến target_pixel_pos
-        if self.moving:
+        if self.moving and len(self.path) > 1:
             dx = self.target_pixel_pos[0] - self.pixel_pos[0]
             dy = self.target_pixel_pos[1] - self.pixel_pos[1]
-            distance = max(abs(dx), abs(dy))  # Khoảng cách Manhattan
+            distance = max(abs(dx), abs(dy))
 
             speed = self.speed * delta_time
             if distance > speed:
@@ -904,36 +1044,34 @@ class Enemy(pygame.sprite.Sprite):
             else:
                 # Đã đến đích
                 self.pixel_pos = self.target_pixel_pos[:]
-                if len(self.path) > 1:
-                    next_grid_pos = self.path[1]
-                    x, y = next_grid_pos
-                    if 0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT and grid[y][x] != 1:
-                        self.grid_pos = list(next_grid_pos)
-                        self.path.pop(0)
-                        self.pixel_pos = list(to_pixel_pos(self.grid_pos[0], self.grid_pos[1]))  # Đồng bộ
-                        if len(self.path) > 1:
-                            next_grid_pos = self.path[1]
-                            x, y = next_grid_pos
-                            if 0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT and grid[y][x] != 1:
-                                self.target_pixel_pos = list(to_pixel_pos(next_grid_pos[0], next_grid_pos[1]))
-                            else:
-                                self.path = []
-                                self.moving = False
-                                print(f"Ô tiếp theo ({x}, {y}) là tường, hủy đường đi")  # Debug
+                next_grid_pos = self.path[1]
+                x, y = next_grid_pos
+                if 0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT and grid[y][x] != 1:
+                    self.grid_pos = list(next_grid_pos)
+                    self.path.pop(0)
+                    self.pixel_pos = list(to_pixel_pos(self.grid_pos[0], self.grid_pos[1]))
+                    if len(self.path) > 1:
+                        next_grid_pos = self.path[1]
+                        x, y = next_grid_pos
+                        if 0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT and grid[y][x] != 1:
+                            self.target_pixel_pos = list(to_pixel_pos(next_grid_pos[0], next_grid_pos[1]))
                         else:
+                            self.path = self.last_path[:] if self.last_path else []
                             self.moving = False
-                            print("Hết đường đi")  # Debug
+                            print(f"Ô tiếp theo ({x}, {y}) là tường, sử dụng last_path")  # Debug
                     else:
-                        self.path = []
                         self.moving = False
-                        print(f"Ô đích ({x}, {y}) là tường, hủy đường đi")  # Debug
+                        print("Hết đường đi")  # Debug
                 else:
+                    self.path = self.last_path[:] if self.last_path else []
                     self.moving = False
-                    print("Đường đi rỗng")  # Debug
+                    print(f"Ô đích ({x}, {y}) là tường, sử dụng last_path")  # Debug
 
             self.rect.center = (int(self.pixel_pos[0]), int(self.pixel_pos[1]))
         else:
             print(f"Kẻ thù tại {self.grid_pos} không di chuyển (moving = False)")  # Debug
+
+
 
 # Lưu dữ liệu hiệu suất
 def save_performance(algorithm, difficulty, map_name, score, stars, time_taken):
@@ -1368,7 +1506,7 @@ def splash_screen():
 def menu_screen():
     global frame_index
     menu_active = True
-    algorithm_options = ["BFS", "IDS", "A*", "IDA*"]
+    algorithm_options = ["BFS", "IDS", "A*", "IDA*", "Simulated Annealing", "Beam Search"]
     difficulty_options = ["Easy", "Medium", "Hard"]
     selected_algorithm = 0
     selected_difficulty = 0
@@ -1689,11 +1827,9 @@ STAGES = [
     ["Nha may", "Thanh pho"],   # Stage 3
 ]
 
-STAGE_ALGORITHMS = [
-    ["BFS", "IDS"],   # Stage 0: Uninformed Search
-    ["A*", "IDA*"],   # Stage 1: Informed Search
-    ["A*", "IDA*"],   # Stage 2: Informed Search (tạm thời, có thể thay sau)
-]
+
+
+
 
 
 # Vòng lặp game chính
