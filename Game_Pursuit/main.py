@@ -321,7 +321,7 @@ def draw_grid(exit_pos=None):
                 pygame.draw.rect(screen, LIGHT_GREEN, rect)
                 screen.blit(heal_img, (rect.x+2.5, rect.y+2.5))
             elif grid[y][x] == 9:  # Chìa khóa
-                pygame.draw.rect(screen, WHITE, rect)
+                pygame.draw.rect(screen, LIGHT_GREEN, rect)
                 screen.blit(key_img, (rect.x + 2.5, rect.y + 2.5))
             elif grid[y][x] == 10:  # Ngôi sao
                 pygame.draw.rect(screen, LIGHT_GREEN, rect)
@@ -1268,7 +1268,7 @@ except Exception as e:
 
 # Tải hình ảnh trái bom
 try:
-    bomb_img = pygame.image.load(r"asset\anh_icon\traibom.jpg").convert_alpha()
+    bomb_img = pygame.image.load(r"asset\anh_icon\traibom.png").convert_alpha()
     bomb_img = pygame.transform.scale(bomb_img, (GRID_SIZE - 5, GRID_SIZE - 5))
 except Exception as e:
     print(f"Không thể tải hình ảnh trái bom: {e}")
@@ -1826,10 +1826,6 @@ STAGES = [
     ["Khach san", "Rung sau"],  # Stage 2
     ["Nha may", "Thanh pho"],   # Stage 3
 ]
-
-
-
-
 
 
 # Vòng lặp game chính
