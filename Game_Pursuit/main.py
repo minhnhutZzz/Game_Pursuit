@@ -1,5 +1,5 @@
 import json
-from time import time
+import time
 import pygame
 import random
 import heapq
@@ -11,6 +11,20 @@ import cv2
 import numpy as np
 import os
 import uuid
+
+
+
+current_map_index = 0  # Cập nhật biến này trong game loop khi chuyển map
+
+# Từ điển lưu dữ liệu hiệu suất cho map đầu tiên
+performance_data = {
+    'BFS': {'states': 0, 'time': 0.0},
+    'IDS': {'states': 0, 'time': 0.0},
+    'A*': {'states': 0, 'time': 0.0},
+    'IDA*': {'states': 0, 'time': 0.0},
+    'Simulated Annealing': {'states': 0, 'time': 0.0},
+    'Beam Search': {'states': 0, 'time': 0.0}
+}
 
 video_path = os.path.abspath("asset/anh_background/background1.mp4")
 cap = cv2.VideoCapture(video_path)
@@ -317,7 +331,7 @@ def draw_grid(exit_pos=None):
             elif grid[y][x] == 7:  # Trái bom
                 pygame.draw.rect(screen, LIGHT_GREEN, rect)
                 screen.blit(bomb_img, (rect.x + 2.5, rect.y + 2.5))
-            elif grid[y][x]==8:
+            elif grid[y][x]==8: # máu
                 pygame.draw.rect(screen, LIGHT_GREEN, rect)
                 screen.blit(heal_img, (rect.x+2.5, rect.y+2.5))
             elif grid[y][x] == 9:  # Chìa khóa
@@ -408,6 +422,7 @@ def bfs_search(start, goal):
     queue = deque([start])
     came_from = {start: None}
     visited = {start}
+    states_explored = 1  # Đếm số trạng thái (nút) được khám phá
 
     while queue:
         current = queue.popleft()
@@ -421,6 +436,7 @@ def bfs_search(start, goal):
                 queue.append(next_pos)
                 visited.add(next_pos)
                 came_from[next_pos] = current
+                states_explored += 1  # Tăng số trạng thái mỗi khi thêm nút mới
 
     path = []
     current = goal
@@ -429,20 +445,20 @@ def bfs_search(start, goal):
         current = came_from.get(current)
         if current is None:
             print("BFS không tìm thấy đường đi")  # Debug
-            return []
+            return [], states_explored
     path.append(start)
     path.reverse()
-    # Kiểm tra đường đi
     for x, y in path:
         if grid[y][x] == 1:
             print(f"Lỗi: Đường đi BFS chứa ô tường tại ({x}, {y})")  # Debug
-            return []
-    print(f"Đường đi BFS: {path}")  # Debug
-    return path
+            return [], states_explored
+    print(f"Đường đi BFS: {path}, States: {states_explored}")  # Debug
+    return path, states_explored
 
 # IDS
 def ids_search(start, goal):
     def dls(node, goal, depth, came_from, visited):
+        nonlocal states_explored
         if depth < 0:
             return False, None
         if node == goal:
@@ -454,12 +470,14 @@ def ids_search(start, goal):
                     next_pos not in visited):
                 visited.add(next_pos)
                 came_from[next_pos] = node
+                states_explored += 1  # Tăng số trạng thái mỗi khi xem xét nút mới
                 found, result = dls(next_pos, goal, depth - 1, came_from, visited)
                 if found:
                     return True, result
         return False, None
 
     depth = 0
+    states_explored = 1  # Đếm nút ban đầu
     while True:
         came_from = {start: None}
         visited = {start}
@@ -472,16 +490,15 @@ def ids_search(start, goal):
                 current = came_from.get(current)
                 if current is None:
                     print("IDS không tìm thấy đường đi")  # Debug
-                    return []
+                    return [], states_explored
             path.append(start)
             path.reverse()
-            # Kiểm tra đường đi
             for x, y in path:
                 if grid[y][x] == 1:
                     print(f"Lỗi: Đường đi IDS chứa ô tường tại ({x}, {y})")  # Debug
-                    return []
-            print(f"Đường đi IDS: {path}")  # Debug
-            return path
+                    return [], states_explored
+            print(f"Đường đi IDS: {path}, States: {states_explored}")  # Debug
+            return path, states_explored
         depth += 1
 
 # A*
@@ -490,6 +507,7 @@ def a_star_search(start, goal):
     heapq.heappush(frontier, (0, start))
     came_from = {start: None}
     cost_so_far = {start: 0}
+    states_explored = 1  # Đếm nút ban đầu
 
     while frontier:
         _, current = heapq.heappop(frontier)
@@ -505,6 +523,7 @@ def a_star_search(start, goal):
                     priority = new_cost + heuristic(next_pos, goal)
                     heapq.heappush(frontier, (priority, next_pos))
                     came_from[next_pos] = current
+                    states_explored += 1  # Tăng số trạng thái mỗi khi thêm nút mới
             else:
                 print(f"Bỏ qua ô ({x}, {y}) vì là tường hoặc ngoài lưới")  # Debug
 
@@ -515,20 +534,20 @@ def a_star_search(start, goal):
         current = came_from.get(current)
         if current is None:
             print("A* không tìm thấy đường đi")  # Debug
-            return []
+            return [], states_explored
     path.append(start)
     path.reverse()
-    # Kiểm tra đường đi
     for x, y in path:
         if grid[y][x] == 1:
             print(f"Lỗi: Đường đi A* chứa ô tường tại ({x}, {y})")  # Debug
-            return []
-    print(f"Đường đi A*: {path}")  # Debug
-    return path
+            return [], states_explored
+    print(f"Đường đi A*: {path}, States: {states_explored}")  # Debug
+    return path, states_explored
 
 # IDA*
 def ida_star_search(start, goal):
     def search(node, g, threshold, came_from):
+        nonlocal states_explored
         f = g + heuristic(node, goal)
         if f > threshold:
             return f, None
@@ -541,6 +560,7 @@ def ida_star_search(start, goal):
             if (0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT and grid[y][x] != 1 and
                     next_pos not in came_from):
                 came_from[next_pos] = node
+                states_explored += 1  # Tăng số trạng thái mỗi khi xem xét nút mới
                 new_f, result = search(next_pos, g + 1, threshold, came_from)
                 if result is not None:
                     return new_f, result
@@ -549,6 +569,7 @@ def ida_star_search(start, goal):
         return min_f, None
 
     threshold = heuristic(start, goal)
+    states_explored = 1  # Đếm nút ban đầu
     while True:
         came_from = {start: None}
         new_threshold, result = search(start, 0, threshold, came_from)
@@ -560,16 +581,15 @@ def ida_star_search(start, goal):
                 current = came_from.get(current)
             path.append(start)
             path.reverse()
-            # Kiểm tra đường đi
             for x, y in path:
                 if grid[y][x] == 1:
                     print(f"Lỗi: Đường đi IDA* chứa ô tường tại ({x}, {y})")  # Debug
-                    return []
-            print(f"Đường đi IDA*: {path}")  # Debug
-            return path
+                    return [], states_explored
+            print(f"Đường đi IDA*: {path}, States: {states_explored}")  # Debug
+            return path, states_explored
         if new_threshold == float('inf'):
             print("IDA* không tìm thấy đường đi")  # Debug
-            return []
+            return [], states_explored
         threshold = new_threshold
 
 
@@ -586,27 +606,28 @@ def manhattan_distance(pos1, pos2):
 
 
 def simulated_annealing_search(start, goal):
-    max_iterations = 400  # Tăng nhẹ từ 300 để có thêm cơ hội hội tụ
-    initial_temp = 50     # Giảm từ 100 để giảm ngẫu nhiên ban đầu
-    cooling_rate = 0.9995 # Giữ để hội tụ nhanh
+    max_iterations = 400
+    initial_temp = 50
+    cooling_rate = 0.9995
     current_path = [start]
     current_pos = start
     best_path = current_path[:]
     best_cost = manhattan_distance(start, goal)
     temp = initial_temp
-    last_good_path = best_path[:]  # Lưu đường đi tốt
+    last_good_path = best_path[:]
+    states_explored = 1  # Đếm trạng thái ban đầu
 
-    # Khởi tạo đường đi ban đầu dựa trên heuristic
-    for _ in range(50):  # 50 bước khởi tạo để tiến gần mục tiêu
+    # Khởi tạo đường đi ban đầu
+    for _ in range(50):
         neighbors = get_neighbors(current_pos)
         if not neighbors:
             break
-        # Chọn hàng xóm tốt nhất
         neighbors_with_cost = [(n, manhattan_distance(n, goal)) for n in neighbors]
         neighbors_with_cost.sort(key=lambda x: x[1])
         next_pos = neighbors_with_cost[0][0]
         current_path.append(next_pos)
         current_pos = next_pos
+        states_explored += len(neighbors)  # Đếm số hàng xóm được xem xét
         new_cost = manhattan_distance(next_pos, goal)
         if new_cost < best_cost:
             best_path = current_path[:]
@@ -614,30 +635,28 @@ def simulated_annealing_search(start, goal):
             last_good_path = best_path[:]
         if current_pos == goal:
             print(f"Đạt mục tiêu trong giai đoạn khởi tạo: {best_path}")  # Debug
-            return best_path
+            return best_path, states_explored
 
     # Giai đoạn Simulated Annealing
     for i in range(max_iterations):
         if current_pos == goal:
             print(f"Đạt mục tiêu ở vòng lặp {i}: {best_path}")  # Debug
-            return best_path
+            return best_path, states_explored
         neighbors = get_neighbors(current_pos)
         if not neighbors:
             print(f"Không có hàng xóm tại {current_pos}, dùng last_good_path")  # Debug
             break
-
-        # Ưu tiên hàng xóm gần mục tiêu (90% chọn tốt nhất)
         neighbors_with_cost = [(n, manhattan_distance(n, goal)) for n in neighbors]
         neighbors_with_cost.sort(key=lambda x: x[1])
-        if random.random() < 0.9:  # 90% chọn tốt nhất, giảm ngẫu nhiên
+        if random.random() < 0.9:
             next_pos = neighbors_with_cost[0][0]
         else:
             next_pos = random.choice(neighbors)
+        states_explored += len(neighbors)  # Đếm số hàng xóm được xem xét
 
         new_path = current_path + [next_pos]
         new_cost = manhattan_distance(next_pos, goal)
 
-        # Chấp nhận bước mới nếu tốt hơn hoặc theo xác suất
         if new_cost <= best_cost or random.random() < math.exp((best_cost - new_cost) / temp):
             current_path = new_path
             current_pos = next_pos
@@ -647,22 +666,20 @@ def simulated_annealing_search(start, goal):
                 last_good_path = best_path[:]
                 print(f"Cải thiện đường đi ở vòng lặp {i}, cost: {best_cost}, path: {best_path}")  # Debug
             elif new_cost == best_cost:
-                last_good_path = new_path[:]  # Giữ đường đi tương đương
+                last_good_path = new_path[:]
         temp *= cooling_rate
 
-    # Kiểm tra và trả về đường đi
     if best_path[-1] == goal:
         print(f"Trả về best_path đạt mục tiêu: {best_path}")  # Debug
-        return best_path
+        return best_path, states_explored
     elif last_good_path and len(last_good_path) > 1 and manhattan_distance(last_good_path[-1], goal) < manhattan_distance(start, goal):
         print(f"Trả về last_good_path tiến gần mục tiêu: {last_good_path}")  # Debug
-        return last_good_path
+        return last_good_path, states_explored
     else:
-        # Dự phòng BFS
-        bfs_path = bfs_search(start, goal)
+        bfs_path, bfs_states = bfs_search(start, goal)
+        states_explored += bfs_states
         print(f"Simulated Annealing thất bại, dùng BFS: {bfs_path}")  # Debug
-        return bfs_path if bfs_path else last_good_path
-
+        return bfs_path if bfs_path else last_good_path, states_explored
 
 
 
@@ -670,10 +687,10 @@ def simulated_annealing_search(start, goal):
 
 # --- Thuật toán Beam Search ---
 def beam_search(start, goal):
-    start_time = time()
     beam_width = 5
     queue = [(manhattan_distance(start, goal), [start])]
     visited = set()
+    states_explored = 1  # Đếm trạng thái ban đầu
 
     while queue:
         new_queue = []
@@ -683,7 +700,7 @@ def beam_search(start, goal):
             _, path = heappop(queue)
             current = path[-1]
             if current == goal:
-                return path
+                return path, states_explored
             if current in visited:
                 continue
             visited.add(current)
@@ -691,10 +708,11 @@ def beam_search(start, goal):
                 if neighbor not in visited:
                     new_path = path + [neighbor]
                     heappush(new_queue, (manhattan_distance(neighbor, goal), new_path))
+                    states_explored += 1  # Tăng số trạng thái mỗi khi thêm nút mới
         queue = new_queue
-    path = bfs_search(start, goal)  # Dùng BFS làm dự phòng
-    return path
-
+    path, bfs_states = bfs_search(start, goal)
+    states_explored += bfs_states
+    return path, states_explored
 
 
 class Player(pygame.sprite.Sprite):
@@ -900,63 +918,60 @@ class Enemy(pygame.sprite.Sprite):
         self.grid_pos = [grid_x, grid_y]
         self.pixel_pos = list(to_pixel_pos(grid_x, grid_y))
         self.player = player
-        self.speed = 90  # Tốc độ pixel/giây (~1.5 ô/giây)
+        self.speed = 90
         self.default_speed = 90
         self.slow_timer = 0
         self.invisibility_timer = 0
-        self.algorithm = algorithm
+        self.algorithm = algorithm  # Lưu thuật toán được chọn
         self.difficulty = difficulty
         self.path = []
-        self.last_path = []  # Bộ đệm đường đi
+        self.last_path = []
         self.target_pixel_pos = self.pixel_pos[:]
         self.moving = False
         self.path_update_timer = 0
-        self.path_update_interval = FPS // 5  # Cập nhật 5 lần/giây, tăng từ FPS // 10
+        self.path_update_interval = FPS // 5
 
-        # Điều chỉnh tốc độ dựa trên độ khó
         if difficulty == "Easy":
-            self.speed = 60  # ~1 ô/giây
+            self.speed = 60
         elif difficulty == "Medium":
-            self.speed = 90  # ~1.5 ô/giây
-        else:  # Hard
-            self.speed = 120  # ~2 ô/giây
+            self.speed = 90
+        else:
+            self.speed = 120
         self.default_speed = self.speed
 
         self.exit_pos = get_exit_position()
 
     def activate_slow(self):
-        self.speed = self.default_speed * 0.5  # Giảm tốc độ còn 50%
+        self.speed = self.default_speed * 0.5
         self.slow_timer = 5 * FPS
         if pickup_sound:
             pickup_sound.play()
 
     def activate_invisibility(self):
         self.invisibility_timer = 5 * FPS
+        if pickup_sound:
+            pickup_sound.play()
 
     def update(self):
         delta_time = clock.get_time() / 1000.0
 
-        # Xử lý trạng thái làm chậm
         if self.slow_timer > 0:
             self.slow_timer -= 1
             if self.slow_timer <= 0:
                 self.speed = self.default_speed
 
-        # Xử lý trạng thái tàng hình
         if self.invisibility_timer > 0:
             self.invisibility_timer -= 1
             self.image.set_alpha(128)
         else:
             self.image.set_alpha(255)
 
-        # Cập nhật đường đi
         self.path_update_timer += 1
         if self.path_update_timer >= self.path_update_interval:
             self.path_update_timer = 0
             print(f"Đang cập nhật đường đi cho kẻ thù tại {self.grid_pos}")  # Debug
 
             if self.invisibility_timer > 0:
-                # Di chuyển ngẫu nhiên khi người chơi tàng hình
                 directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
                 random.shuffle(directions)
                 for dx, dy in directions:
@@ -971,24 +986,11 @@ class Enemy(pygame.sprite.Sprite):
                 else:
                     print("Không tìm thấy ô hợp lệ để di chuyển ngẫu nhiên")  # Debug
             else:
-                # Đuổi theo người chơi
                 target_pos = tuple(self.player.grid_pos)
-                start_time = time()
                 print(f"Mục tiêu: {target_pos}, thuật toán: {self.algorithm}")  # Debug
-                if self.algorithm == "BFS":
-                    self.path = bfs_search(tuple(self.grid_pos), target_pos)
-                elif self.algorithm == "IDS":
-                    self.path = ids_search(tuple(self.grid_pos), target_pos)
-                elif self.algorithm == "A*":
-                    self.path = a_star_search(tuple(self.grid_pos), target_pos)
-                elif self.algorithm == "IDA*":
-                    self.path = ida_star_search(tuple(self.grid_pos), target_pos)
-                elif self.algorithm == "Simulated Annealing":
-                    self.path = simulated_annealing_search(tuple(self.grid_pos), target_pos)
-                elif self.algorithm == "Beam Search":
-                    self.path = beam_search(tuple(self.grid_pos), target_pos)
+                # Gọi choose_algorithm với thuật toán đã chọn
+                self.path, _ = choose_algorithm(tuple(self.grid_pos), target_pos, self.algorithm)
 
-                # Lưu đường đi tốt hoặc sử dụng đường đi cũ
                 if self.path and len(self.path) > 1:
                     self.last_path = self.path[:]
                     print(f"Đường đi mới: {self.path}")  # Debug
@@ -996,8 +998,6 @@ class Enemy(pygame.sprite.Sprite):
                     self.path = self.last_path[:] if self.last_path else []
                     print(f"Không tìm thấy đường đi mới, sử dụng last_path: {self.path}")  # Debug
 
-
-                # Kiểm tra đường đi hợp lệ
                 if len(self.path) > 1:
                     next_grid_pos = self.path[1]
                     x, y = next_grid_pos
@@ -1008,7 +1008,6 @@ class Enemy(pygame.sprite.Sprite):
                         self.path = self.last_path[:] if self.last_path else []
                         print(f"Đường đi chứa ô tường tại ({x}, {y}), sử dụng last_path")  # Debug
                 else:
-                    # Thử di chuyển ngẫu nhiên nếu không có đường đi
                     directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
                     random.shuffle(directions)
                     for dx, dy in directions:
@@ -1024,7 +1023,6 @@ class Enemy(pygame.sprite.Sprite):
                         self.moving = False
                         print("Không tìm thấy ô hợp lệ")  # Debug
 
-        # Di chuyển mượt mà đến target_pixel_pos
         if self.moving and len(self.path) > 1:
             dx = self.target_pixel_pos[0] - self.pixel_pos[0]
             dy = self.target_pixel_pos[1] - self.pixel_pos[1]
@@ -1032,7 +1030,6 @@ class Enemy(pygame.sprite.Sprite):
 
             speed = self.speed * delta_time
             if distance > speed:
-                # Di chuyển theo một hướng tại một thời điểm
                 if abs(dx) > abs(dy):
                     speed_x = speed if dx > 0 else -speed
                     speed_y = 0
@@ -1042,7 +1039,6 @@ class Enemy(pygame.sprite.Sprite):
                 self.pixel_pos[0] += speed_x
                 self.pixel_pos[1] += speed_y
             else:
-                # Đã đến đích
                 self.pixel_pos = self.target_pixel_pos[:]
                 next_grid_pos = self.path[1]
                 x, y = next_grid_pos
@@ -1074,75 +1070,160 @@ class Enemy(pygame.sprite.Sprite):
 
 
 # Lưu dữ liệu hiệu suất
-def save_performance(algorithm, difficulty, map_name, score, stars, time_taken):
+# def save_performance(algorithm, difficulty, map_name, score, stars, time_taken):
+#     global performance_data
+#     performance_data.append({
+#         'algorithm': algorithm,
+#         'difficulty': difficulty,
+#         'map': map_name,
+#         'score': score,
+#         'stars': stars,
+#         'time': time_taken,
+#         'id': str(uuid.uuid4())
+#     })
+
+def choose_algorithm(start, goal, selected_algorithm):
+    global performance_data, current_map_index
+
+    if not hasattr(choose_algorithm, "measured_algorithms"):
+        choose_algorithm.measured_algorithms = set()
+
+    algorithm = selected_algorithm
+    print(f"Running {algorithm} on map {current_map_index}")  # Debug
+
+    start_time = time.perf_counter()
+    path = []
+    states_explored = 0
+
+    if algorithm == 'BFS':
+        path, states_explored = bfs_search(start, goal)
+    elif algorithm == 'IDS':
+        path, states_explored = ids_search(start, goal)
+    elif algorithm == 'A*':
+        path, states_explored = a_star_search(start, goal)
+    elif algorithm == 'IDA*':
+        path, states_explored = ida_star_search(start, goal)
+    elif algorithm == 'Simulated Annealing':
+        path, states_explored = simulated_annealing_search(start, goal)
+    elif algorithm == 'Beam Search':
+        path, states_explored = beam_search(start, goal)
+
+    end_time = time.perf_counter()
+    runtime_ms = (end_time - start_time) * 1000  # Chuyển sang mili giây
+
+    if current_map_index == 0 and algorithm not in choose_algorithm.measured_algorithms:
+        performance_data[algorithm]['states'] = states_explored
+        performance_data[algorithm]['time'] = runtime_ms
+        choose_algorithm.measured_algorithms.add(algorithm)
+        print(f"Updated performance_data for {algorithm}: {performance_data[algorithm]}")  # Debug
+
+    return path, algorithm
+
+
+
+
+# Định nghĩa custom_ylim ở cấp độ toàn cục
+def custom_ylim(data):
+    max_value = max(data) if data else 1
+    upper_limit = max(max_value * 1.1, 0.01)
+    return (0, upper_limit)
+
+
+
+def plot_comparison():
     global performance_data
-    performance_data.append({
-        'algorithm': algorithm,
-        'difficulty': difficulty,
-        'map': map_name,
-        'score': score,
-        'stars': stars,
-        'time': time_taken,
-        'id': str(uuid.uuid4())
-    })
 
-# Vẽ biểu đồ so sánh
-def plot_comparison(difficulty, map_name):
-    algorithms = ["BFS", "A*"]  # Chỉ sử dụng BFS và A* để đơn giản
-    scores = {alg: [] for alg in algorithms}
-    stars = {alg: [] for alg in algorithms}
-    times = {alg: [] for alg in algorithms}
+    print("Performance data:", performance_data)
 
-    for data in performance_data:
-        if data['difficulty'] == difficulty and data['map'] == map_name:
-            alg = data['algorithm']
-            if alg in algorithms:
-                scores[alg].append(data['score'])
-                stars[alg].append(data['stars'])
-                times[alg].append(data['time'])
+    algorithms = ['BFS', 'IDS', 'A*', 'IDA*', 'Simulated Annealing', 'Beam Search']
+    states_explored = [performance_data[algo]['states'] for algo in algorithms]
+    runtimes = [performance_data[algo]['time'] for algo in algorithms]
 
-    plt.figure(figsize=(12, 8))
-    metrics = ['Score', 'Stars', 'Time (s)']
-    colors = ['blue', 'green', 'red']
-    x = np.arange(len(algorithms))
+    print("States explored per algorithm:", dict(zip(algorithms, states_explored)))  # Debug
 
-    for i, metric in enumerate(metrics):
-        values = [np.mean(scores[alg]) if scores[alg] else 0 for alg in algorithms] if metric == 'Score' else \
-                 [np.mean(stars[alg]) if stars[alg] else 0 for alg in algorithms] if metric == 'Stars' else \
-                 [np.mean(times[alg]) if times[alg] else 0 for alg in algorithms]
-        plt.bar(x + i*0.25, values, 0.25, label=metric, color=colors[i])
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 8))
 
-    plt.xlabel('Algorithm')
-    plt.ylabel('Value')
-    plt.title(f'Algorithm Comparison (Difficulty: {difficulty}, Map: {map_name})')
-    plt.xticks(x + 0.25, algorithms)
-    plt.legend()
-    plt.savefig('comparison.png')
-    plt.close()
+    # Biểu đồ 1: Số trạng thái được khám phá
+    ax1.bar(algorithms, states_explored, color='skyblue')
+    ax1.set_title('Number of States Explored (First Map)')
+    ax1.set_xlabel('Algorithm')
+    ax1.set_ylabel('States Explored')
+    ax1.set_ylim(custom_ylim(states_explored))
+    ax1.tick_params(axis='x', rotation=45)
+    for i, v in enumerate(states_explored):
+        ax1.text(i, v, str(v), ha='center', va='bottom')
 
-# Hiển thị biểu đồ
-def comparison_screen(difficulty, map_name):
-    plot_comparison(difficulty, map_name)
-    try:
-        img = pygame.image.load('comparison.png')
-        img = pygame.transform.scale(img, (WINDOW_WIDTH, WINDOW_HEIGHT))
-    except:
-        img = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
-        img.fill(BLACK)
-        text = font_large.render("No data available", True, WHITE)
-        img.blit(text, text.get_rect(center=(WINDOW_WIDTH//2, WINDOW_HEIGHT//2)))
+    # Biểu đồ 2: Thời gian chạy (mili giây)
+    ax2.bar(algorithms, runtimes, color='lightcoral')
+    ax2.set_title('Runtime (First Map)')
+    ax2.set_xlabel('Algorithm')
+    ax2.set_ylabel('Time (ms)')
+    ax2.set_ylim(custom_ylim(runtimes))
+    ax2.tick_params(axis='x', rotation=45)
+    for i, v in enumerate(runtimes):
+        ax2.text(i, v, f'{v:.2f}', ha='center', va='bottom')
 
-    running = True
-    while running:
-        screen.blit(img, (0, 0))
-        pygame.display.flip()
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
-                return False
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
-                return True
-        clock.tick(FPS)
-    return False
+    plt.tight_layout()
+    plt.show()
+
+
+
+# def plot_comparison(difficulty, map_name):
+#     algorithms = ["BFS", "A*"]  # Chỉ sử dụng BFS và A* để đơn giản
+#     scores = {alg: [] for alg in algorithms}
+#     stars = {alg: [] for alg in algorithms}
+#     times = {alg: [] for alg in algorithms}
+#
+#     for data in performance_data:
+#         if data['difficulty'] == difficulty and data['map'] == map_name:
+#             alg = data['algorithm']
+#             if alg in algorithms:
+#                 scores[alg].append(data['score'])
+#                 stars[alg].append(data['stars'])
+#                 times[alg].append(data['time'])
+#
+#     plt.figure(figsize=(12, 8))
+#     metrics = ['Score', 'Stars', 'Time (s)']
+#     colors = ['blue', 'green', 'red']
+#     x = np.arange(len(algorithms))
+#
+#     for i, metric in enumerate(metrics):
+#         values = [np.mean(scores[alg]) if scores[alg] else 0 for alg in algorithms] if metric == 'Score' else \
+#                  [np.mean(stars[alg]) if stars[alg] else 0 for alg in algorithms] if metric == 'Stars' else \
+#                  [np.mean(times[alg]) if times[alg] else 0 for alg in algorithms]
+#         plt.bar(x + i*0.25, values, 0.25, label=metric, color=colors[i])
+#
+#     plt.xlabel('Algorithm')
+#     plt.ylabel('Value')
+#     plt.title(f'Algorithm Comparison (Difficulty: {difficulty}, Map: {map_name})')
+#     plt.xticks(x + 0.25, algorithms)
+#     plt.legend()
+#     plt.savefig('comparison.png')
+#     plt.close()
+#
+# # Hiển thị biểu đồ
+# def comparison_screen(difficulty, map_name):
+#     plot_comparison(difficulty, map_name)
+#     try:
+#         img = pygame.image.load('comparison.png')
+#         img = pygame.transform.scale(img, (WINDOW_WIDTH, WINDOW_HEIGHT))
+#     except:
+#         img = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+#         img.fill(BLACK)
+#         text = font_large.render("No data available", True, WHITE)
+#         img.blit(text, text.get_rect(center=(WINDOW_WIDTH//2, WINDOW_HEIGHT//2)))
+#
+#     running = True
+#     while running:
+#         screen.blit(img, (0, 0))
+#         pygame.display.flip()
+#         for event in pygame.event.get():
+#             if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
+#                 return False
+#             if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+#                 return True
+#         clock.tick(FPS)
+#     return False
 
 # Tải video (đoạn code của bạn)
 background_frames = []
@@ -1619,6 +1700,7 @@ def game_over_screen(final_score, total_stars):
     score_text = render_text_with_outline(f"Final Score: {final_score}", font, WHITE, BLACK)
     stars_text = render_text_with_outline(f"Total Stars: {total_stars}", font, WHITE, BLACK)
     replay_text = render_text_with_outline("Press R to Replay", font, WHITE, BLACK)
+    ViewPlot_text = render_text_with_outline("Press V to View Plot", font, WHITE, BLACK)
 
     # Căn giữa và điều chỉnh khoảng cách đều
     spacing = 70  # Khoảng cách giữa các dòng
@@ -1628,10 +1710,11 @@ def game_over_screen(final_score, total_stars):
     score_rect = score_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + spacing))
     stars_rect = stars_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + 2 * spacing))
     replay_rect = replay_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + 3 * spacing))
+    ViewPlot_rect= ViewPlot_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + 4 * spacing))
 
     # Vẽ chữ (bỏ khung chữ nhật màu đen)
     for text, rect in [(game_over_text, game_over_rect), (score_text, score_rect),
-                       (stars_text, stars_rect), (replay_text, replay_rect)]:
+                       (stars_text, stars_rect), (replay_text, replay_rect), (ViewPlot_text, ViewPlot_rect)]:
         screen.blit(text, rect)
 
     pygame.display.flip()
@@ -1644,6 +1727,8 @@ def game_over_screen(final_score, total_stars):
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:
                     return True
+                if event.key == pygame.K_v:  # Thêm dòng này
+                    plot_comparison()
     return False
 
 # Chiến thắng
@@ -1673,6 +1758,7 @@ def victory_screen(final_score, total_stars):
     score_text = render_text_with_outline(f"Final Sco re: {final_score}", font, WHITE, BLACK)
     stars_text = render_text_with_outline(f"Total Stars: {total_stars}", font, WHITE, BLACK)
     replay_text = render_text_with_outline("Press R to Replay, Q to Quit", font, WHITE, BLACK)
+    ViewPlot_text = render_text_with_outline("Press V to View Plot", font, WHITE, BLACK)
 
     # Căn giữa và điều chỉnh khoảng cách đều
     spacing = 70  # Khoảng cách giữa các dòng
@@ -1682,10 +1768,11 @@ def victory_screen(final_score, total_stars):
     score_rect = score_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + spacing))
     stars_rect = stars_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + 2 * spacing))
     replay_rect = replay_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + 3 * spacing))
+    ViewPlot_rect = ViewPlot_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + 4 * spacing))
 
     # Vẽ chữ (bỏ khung chữ nhật màu đen)
     for text, rect in [(victory_text, victory_rect), (score_text, score_rect),
-                       (stars_text, stars_rect), (replay_text, replay_rect)]:
+                       (stars_text, stars_rect), (replay_text, replay_rect), (ViewPlot_text, ViewPlot_rect)]:
         screen.blit(text, rect)
 
     pygame.display.flip()
@@ -1704,6 +1791,8 @@ def victory_screen(final_score, total_stars):
                     if victory_sound:
                         victory_sound.stop()
                     return False
+                elif event.key == pygame.K_v:  # Thêm dòng này
+                    plot_comparison()
     return False
 
 
