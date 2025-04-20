@@ -11,6 +11,9 @@ import cv2
 import numpy as np
 import os
 import uuid
+import os
+import platform
+import subprocess
 
 
 
@@ -1082,8 +1085,15 @@ class Enemy(pygame.sprite.Sprite):
 #         'id': str(uuid.uuid4())
 #     })
 
+
+
+# chọn thuật toán áp dụng cho biểu đồ
+# Danh sách lưu trữ thông tin chi tiết của thuật toán (chỉ cho bản đồ đầu tiên)
+algorithm_runs = []
+recorded_algorithms = set()  # Tập hợp để theo dõi các thuật toán đã được lưu
+
 def choose_algorithm(start, goal, selected_algorithm):
-    global performance_data, current_map_index
+    global performance_data, current_map_index, algorithm_runs, has_recorded_first_run
 
     if not hasattr(choose_algorithm, "measured_algorithms"):
         choose_algorithm.measured_algorithms = set()
@@ -1111,6 +1121,20 @@ def choose_algorithm(start, goal, selected_algorithm):
     end_time = time.perf_counter()
     runtime_ms = (end_time - start_time) * 1000  # Chuyển sang mili giây
 
+    # thông tin thuật toán
+    if current_map_index == 0 and algorithm not in recorded_algorithms:
+        run_info = {
+            'algorithm': algorithm,
+            'map_index': current_map_index,
+            'steps': len(path),  # Số bước thực hiện (độ dài đường đi)
+            'runtime_ms': runtime_ms,  # Thời gian chạy (mili giây)
+            'path': path,  # Đường đi
+            'states_explored': states_explored  # Không gian trạng thái
+        }
+        algorithm_runs.append(run_info)
+        recorded_algorithms.add(algorithm)  # Đánh dấu thuật toán đã được lưu
+
+    # thông tin trong biểu đồ cộts
     if current_map_index == 0 and algorithm not in choose_algorithm.measured_algorithms:
         performance_data[algorithm]['states'] = states_explored
         performance_data[algorithm]['time'] = runtime_ms
@@ -1129,7 +1153,7 @@ def custom_ylim(data):
     return (0, upper_limit)
 
 
-
+# biểu đồ cột các thuật toán
 def plot_comparison():
     global performance_data
 
@@ -1166,6 +1190,40 @@ def plot_comparison():
     plt.tight_layout()
     plt.show()
 
+# file thông tin thuật toán
+def save_algorithm_info_to_file(filename="algorithm_performance.txt"):
+    global algorithm_runs
+    try:
+        # Ghi thông tin vào file
+        with open(filename, 'w') as f:
+            f.write("Algorithm Performance Report (First Map)\n")
+            f.write("=======================================\n\n")
+            for run in algorithm_runs:
+                f.write(f"Algorithm: {run['algorithm']}\n")
+                f.write(f"Map Index: {run['map_index']}\n")
+                f.write(f"Number of Steps: {run['steps']}\n")
+                f.write(f"Runtime (ms): {run['runtime_ms']:.2f}\n")
+                f.write(f"Path: {run['path']}\n")
+                f.write(f"States Explored: {run['states_explored']}\n")
+                f.write("-----------------------------\n\n")
+        print(f"Algorithm performance for first map saved to {filename}")
+
+        # Tự động mở file sau khi ghi
+        system = platform.system().lower()
+        try:
+            if system == "windows":
+                os.startfile(filename)  # Mở file trên Windows
+            elif system == "darwin":  # macOS
+                subprocess.run(["open", filename], check=True)
+            elif system == "linux":
+                subprocess.run(["xdg-open", filename], check=True)
+            else:
+                print(f"Auto-open not supported on {system}. Please open the file manually: {filename}")
+        except Exception as e:
+            print(f"Error opening file: {e}. Please open the file manually: {filename}")
+
+    except Exception as e:
+        print(f"Error saving to file: {e}")
 
 
 # def plot_comparison(difficulty, map_name):
@@ -1701,6 +1759,7 @@ def game_over_screen(final_score, total_stars):
     stars_text = render_text_with_outline(f"Total Stars: {total_stars}", font, WHITE, BLACK)
     replay_text = render_text_with_outline("Press R to Replay", font, WHITE, BLACK)
     ViewPlot_text = render_text_with_outline("Press V to View Plot", font, WHITE, BLACK)
+    save_info_text = render_text_with_outline("Press I to Save Algorithm Info", font, WHITE, BLACK)
 
     # Căn giữa và điều chỉnh khoảng cách đều
     spacing = 70  # Khoảng cách giữa các dòng
@@ -1711,10 +1770,11 @@ def game_over_screen(final_score, total_stars):
     stars_rect = stars_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + 2 * spacing))
     replay_rect = replay_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + 3 * spacing))
     ViewPlot_rect= ViewPlot_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + 4 * spacing))
+    save_info_rect = save_info_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + 5 * spacing))
 
     # Vẽ chữ (bỏ khung chữ nhật màu đen)
     for text, rect in [(game_over_text, game_over_rect), (score_text, score_rect),
-                       (stars_text, stars_rect), (replay_text, replay_rect), (ViewPlot_text, ViewPlot_rect)]:
+                       (stars_text, stars_rect), (replay_text, replay_rect), (ViewPlot_text, ViewPlot_rect), (save_info_text, save_info_rect)]:
         screen.blit(text, rect)
 
     pygame.display.flip()
@@ -1729,6 +1789,9 @@ def game_over_screen(final_score, total_stars):
                     return True
                 if event.key == pygame.K_v:  # Thêm dòng này
                     plot_comparison()
+                if event.key == pygame.K_i:  # Thêm sự kiện nhấn phím I
+                    save_algorithm_info_to_file()
+
     return False
 
 # Chiến thắng
@@ -1759,6 +1822,7 @@ def victory_screen(final_score, total_stars):
     stars_text = render_text_with_outline(f"Total Stars: {total_stars}", font, WHITE, BLACK)
     replay_text = render_text_with_outline("Press R to Replay, Q to Quit", font, WHITE, BLACK)
     ViewPlot_text = render_text_with_outline("Press V to View Plot", font, WHITE, BLACK)
+    save_info_text = render_text_with_outline("Press I to Save Algorithm Info", font, WHITE, BLACK)
 
     # Căn giữa và điều chỉnh khoảng cách đều
     spacing = 70  # Khoảng cách giữa các dòng
@@ -1769,10 +1833,11 @@ def victory_screen(final_score, total_stars):
     stars_rect = stars_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + 2 * spacing))
     replay_rect = replay_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + 3 * spacing))
     ViewPlot_rect = ViewPlot_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + 4 * spacing))
+    save_info_rect = save_info_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + 5 * spacing))
 
     # Vẽ chữ (bỏ khung chữ nhật màu đen)
     for text, rect in [(victory_text, victory_rect), (score_text, score_rect),
-                       (stars_text, stars_rect), (replay_text, replay_rect), (ViewPlot_text, ViewPlot_rect)]:
+                       (stars_text, stars_rect), (replay_text, replay_rect), (ViewPlot_text, ViewPlot_rect), (save_info_text, save_info_rect)]:
         screen.blit(text, rect)
 
     pygame.display.flip()
@@ -1793,6 +1858,9 @@ def victory_screen(final_score, total_stars):
                     return False
                 elif event.key == pygame.K_v:  # Thêm dòng này
                     plot_comparison()
+                elif event.key == pygame.K_i:  # Thêm sự kiện nhấn phím I
+                    save_algorithm_info_to_file()
+
     return False
 
 
@@ -1940,6 +2008,8 @@ while running:
     total_stars = 0
     current_stage = 0
     game_active = True
+    recorded_algorithms = set()  # Đặt lại khi bắt đầu trò chơi mới
+    algorithm_runs = []  # Đặt lại danh sách lưu trữ
 
     while game_active and current_stage < len(STAGES):
         current_map_idx = 0
@@ -2132,6 +2202,8 @@ while running:
                     total_map_score = 0
                     total_stars = 0
                     current_stage = 0
+                    recorded_algorithms = set()  # Đặt lại khi chơi lại
+                    algorithm_runs = []  # Đặt lại danh sách lưu trữ
                     break
             else:
                 replay = True
@@ -2141,6 +2213,8 @@ while running:
                     total_map_score = 0
                     total_stars = 0
                     current_stage = 0
+                    recorded_algorithms = set()  # Đặt lại khi chơi lại
+                    algorithm_runs = []  # Đặt lại danh sách lưu trữ
                     break
 
 pygame.quit()
