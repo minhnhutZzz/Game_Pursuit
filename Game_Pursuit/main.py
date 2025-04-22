@@ -3,7 +3,7 @@ import time
 import pygame
 import random
 import heapq
-#from heapq import heappush, heappop
+from heapq import heappush, heappop
 import math
 from collections import deque
 import cv2
@@ -25,10 +25,10 @@ performance_data = {
     # 'IDS': {'states': 0, 'time': 0.0},
     'A*': {'states': 0, 'time': 0.0},
     # 'IDA*': {'states': 0, 'time': 0.0},
-    'Simulated Annealing': {'states': 0, 'time': 0.0},
-    #'Beam Search': {'states': 0, 'time': 0.0},
+    #'Simulated Annealing': {'states': 0, 'time': 0.0},
+    'Beam Search': {'states': 0, 'time': 0.0},
     'AND-OR Tree': {'states': 0, 'time': 0.0},
-    'Min-Conflicts': {'states': 0, 'time': 0.0},
+    'Forward Checking': {'states': 0, 'time': 0.0},
     'Q-Learning': {'states': 0, 'time': 0.0}
 }
 
@@ -346,8 +346,7 @@ def spawn_items(grid, player_pos, enemy_pos, exit_pos, num_items=3, num_spikes=2
 
 
 # Các hàm thuật toán
-def heuristic(a, b):
-    return abs(a[0] - b[0]) + abs(a[1] - b[1])
+
 
 # BFS
 def bfs_search(start, goal):
@@ -429,12 +428,15 @@ def bfs_search(start, goal):
 #             return path, states_explored
 #         depth += 1
 
+def heuristic(a, b):
+    return abs(a[0] - b[0]) + abs(a[1] - b[1])
+
 # A*
 def a_star_search(start, goal):
-    frontier = []
+    frontier = [] # hàng đợi ưu tiên
     heapq.heappush(frontier, (0, start))
-    came_from = {start: None}
-    cost_so_far = {start: 0}
+    came_from = {start: None} # từ điển để lưu thông tin ô cha của mỗi ô, key là ô hiện tại, value là ô cha
+    cost_so_far = {start: 0} # lưu chi phí thực tế từ start đến ô n
     states_explored = 1
 
     while frontier:
@@ -445,10 +447,10 @@ def a_star_search(start, goal):
             next_pos = (current[0] + dx, current[1] + dy)
             x, y = next_pos
             if (0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT and grid[y][x] != 1):
-                new_cost = cost_so_far[current] + 1
+                new_cost = cost_so_far[current] + 1 # tính chi phí g(n)
                 if next_pos not in cost_so_far or new_cost < cost_so_far[next_pos]:
                     cost_so_far[next_pos] = new_cost
-                    priority = new_cost + heuristic(next_pos, goal)
+                    priority = new_cost + heuristic(next_pos, goal) # tính chi phí f(n)
                     heapq.heappush(frontier, (priority, next_pos))
                     came_from[next_pos] = current
                     states_explored += 1
@@ -553,194 +555,257 @@ def get_direction_from_action(action):
         return -1, 0
     return 0, 0
 
-#--- Thuật toán Simulated Annealing ---
-def simulated_annealing_search(start, goal):
-    max_iterations = 500
-    initial_temp = 100
-    cooling_rate = 0.9995
-    current_path = [start]
-    current_pos = start
-    best_path = current_path[:]
-    best_cost = manhattan_distance(start, goal)
-    temp = initial_temp
-    last_good_path = best_path[:]
-    states_explored = 1  # Đếm trạng thái ban đầu
-
-    # Giai đoạn khởi tạo: tạo đường đi ban đầu (50 bước)
-    for _ in range(50):
-        neighbors = get_neighbors(current_pos)
-        if not neighbors:
-            break
-        states_explored += len(neighbors)  # Đếm số hàng xóm được xem xét
-        neighbors_with_cost = [(n, manhattan_distance(n, goal)) for n in neighbors]
-        neighbors_with_cost.sort(key=lambda x: x[1])
-        next_pos = neighbors_with_cost[0][0]  # Chọn ô gần mục tiêu nhất
-        current_path.append(next_pos)
-        current_pos = next_pos
-        new_cost = manhattan_distance(next_pos, goal)
-        if new_cost < best_cost:
-            best_path = current_path[:]
-            best_cost = new_cost
-            last_good_path = best_path[:]
-        # Không dừng sớm, tiếp tục tạo đường đi ban đầu ngay cả khi đến mục tiêu
-
-    # Giai đoạn Simulated Annealing
-    for i in range(max_iterations):
-        neighbors = get_neighbors(current_pos)
-        if not neighbors:
-            break
-        states_explored += len(neighbors)  # Đếm số hàng xóm được xem xét
-
-        neighbors_with_cost = [(n, manhattan_distance(n, goal)) for n in neighbors]
-        neighbors_with_cost.sort(key=lambda x: x[1])
-        if random.random() < 0.9:
-            next_pos = neighbors_with_cost[0][0]  # Chọn ô gần mục tiêu nhất
-        else:
-            next_pos = random.choice(neighbors)  # Chọn ngẫu nhiên để thoát cực trị cục bộ
-
-        new_path = current_path + [next_pos]
-        new_cost = manhattan_distance(next_pos, goal)
-
-        # Cập nhật đường đi nếu tốt hơn hoặc theo xác suất Simulated Annealing
-        if new_cost <= best_cost or random.random() < math.exp((best_cost - new_cost) / temp):
-            current_path = new_path
-            current_pos = next_pos
-            if new_cost < best_cost:
-                best_path = new_path[:]
-                best_cost = new_cost
-                last_good_path = best_path[:]
-            elif new_cost == best_cost:
-                last_good_path = new_path[:]
-        temp *= cooling_rate
-
-    # Kiểm tra đường đi tốt nhất
-    if best_path[-1] == goal:
-        return best_path, states_explored
-    elif last_good_path and len(last_good_path) > 1 and manhattan_distance(last_good_path[-1], goal) < manhattan_distance(start, goal):
-        return last_good_path, states_explored
-    else:
-        bfs_path, bfs_states = bfs_search(start, goal)
-        states_explored += bfs_states
-        print(f"Simulated Annealing failed, falling back to BFS: {bfs_path}")
-        return bfs_path if bfs_path else last_good_path, states_explored
-
-# --- Thuật toán Beam Search ---
-# def beam_search(start, goal):
-#     beam_width = 5
-#     queue = [(manhattan_distance(start, goal), [start])]
-#     visited = set()
-#     states_explored = 1
+# #--- Thuật toán Simulated Annealing ---
+# def simulated_annealing_search(start, goal):
+#     max_iterations = 300  # Giảm từ 500 xuống 300
+#     initial_temp = 200  # Tăng từ 100 lên 200
+#     cooling_rate = 0.995  # Giảm từ 0.9995 xuống 0.995
+#     current_path = [start]
+#     current_pos = start
+#     best_path = current_path[:]
+#     best_cost = manhattan_distance(start, goal)
+#     temp = initial_temp
+#     last_good_path = best_path[:]
+#     states_explored = 1  # Đếm trạng thái ban đầu
 #
-#     while queue:
-#         new_queue = []
-#         for _ in range(min(len(queue), beam_width)):
-#             if not queue:
-#                 break
-#             _, path = heappop(queue)
-#             current = path[-1]
-#             if current == goal:
-#                 return path, states_explored
-#             if current in visited:
-#                 continue
-#             visited.add(current)
-#             for neighbor in get_neighbors(current):
-#                 if neighbor not in visited:
-#                     new_path = path + [neighbor]
-#                     heappush(new_queue, (manhattan_distance(neighbor, goal), new_path))
-#                     states_explored += 1
-#         queue = new_queue
-#     path, bfs_states = bfs_search(start, goal)
-#     states_explored += bfs_states
-#     return path, states_explored
+#     # Giai đoạn khởi tạo: tạo đường đi ban đầu (50 bước)
+#     for _ in range(50):
+#         neighbors = get_neighbors(current_pos)
+#         if not neighbors:
+#             break
+#         states_explored += len(neighbors)  # Đếm số hàng xóm được xem xét
+#         neighbors_with_cost = [(n, manhattan_distance(n, goal)) for n in neighbors]
+#         neighbors_with_cost.sort(key=lambda x: x[1])
+#         next_pos = neighbors_with_cost[0][0]  # Chọn ô gần mục tiêu nhất
+#         # Kiểm tra chu kỳ
+#         if next_pos in current_path:
+#             continue
+#         current_path.append(next_pos)
+#         current_pos = next_pos
+#         # Cải thiện hàm chi phí: kết hợp khoảng cách Manhattan và độ dài đường đi
+#         length_penalty = 0.5 * len(current_path)
+#         new_cost = manhattan_distance(next_pos, goal) + length_penalty
+#         if new_cost < best_cost:
+#             best_path = current_path[:]
+#             best_cost = new_cost
+#             last_good_path = best_path[:]
+#
+#     # Giai đoạn Simulated Annealing
+#     for i in range(max_iterations):
+#         neighbors = get_neighbors(current_pos)
+#         if not neighbors:
+#             break
+#         states_explored += len(neighbors)  # Đếm số hàng xóm được xem xét
+#
+#         neighbors_with_cost = [(n, manhattan_distance(n, goal)) for n in neighbors]
+#         neighbors_with_cost.sort(key=lambda x: x[1])
+#         # Tăng tính ngẫu nhiên: giảm xác suất chọn greedy từ 0.9 xuống 0.5
+#         if random.random() < 0.5:
+#             next_pos = neighbors_with_cost[0][0]  # Chọn ô gần mục tiêu nhất
+#         else:
+#             next_pos = random.choice(neighbors)  # Chọn ngẫu nhiên để thoát cực trị cục bộ
+#
+#         # Kiểm tra chu kỳ
+#         if next_pos in current_path:
+#             continue
+#
+#         new_path = current_path + [next_pos]
+#         # Cải thiện hàm chi phí
+#         length_penalty = 0.5 * len(new_path)
+#         new_cost = manhattan_distance(next_pos, goal) + length_penalty
+#
+#         # Cập nhật đường đi nếu tốt hơn hoặc theo xác suất Simulated Annealing
+#         if new_cost <= best_cost or random.random() < math.exp((best_cost - new_cost) / temp):
+#             current_path = new_path
+#             current_pos = next_pos
+#             if new_cost < best_cost:
+#                 best_path = new_path[:]
+#                 best_cost = new_cost
+#                 last_good_path = best_path[:]
+#             elif new_cost == best_cost:
+#                 last_good_path = new_path[:]
+#         temp *= cooling_rate
+#
+#     # Kiểm tra đường đi tốt nhất
+#     if best_path[-1] == goal:
+#         return best_path, states_explored
+#     elif last_good_path and len(last_good_path) > 1 and manhattan_distance(last_good_path[-1], goal) < manhattan_distance(start, goal):
+#         return last_good_path, states_explored
+#     else:
+#         bfs_path, bfs_states = bfs_search(start, goal)
+#         states_explored += bfs_states
+#         print(f"Simulated Annealing failed, falling back to BFS: {bfs_path}")
+#         return bfs_path if bfs_path else last_good_path, states_explored
 
-# thuật toán AND_OR_TREE_Search
-def and_or_tree_search(start, goal):
-    queue = deque([(start, [start])])
+#--- Thuật toán Beam Search ---
+def beam_search(start, goal):
+    beam_width = 5
+    queue = [(manhattan_distance(start, goal), [start])]
     visited = set()
     states_explored = 1
 
     while queue:
-        state, path = queue.popleft()
-
-        if state == goal:
-            return path, states_explored
-
-        if state not in visited:
-            visited.add(state)
-            x, y = state
-            neighbors = []
-            for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
-                next_x, next_y = x + dx, y + dy
-                next_pos = (next_x, next_y)
-                if (0 <= next_x < GRID_WIDTH and 0 <= next_y < GRID_HEIGHT and grid[next_y][next_x] != 1):
-                    neighbors.append(next_pos)
-
-            for neighbor in neighbors:
+        new_queue = []
+        for _ in range(min(len(queue), beam_width)):
+            if not queue:
+                break
+            _, path = heappop(queue)
+            current = path[-1]
+            if current == goal:
+                return path, states_explored
+            if current in visited:
+                continue
+            visited.add(current)
+            for neighbor in get_neighbors(current):
                 if neighbor not in visited:
-                    queue.append((neighbor, path + [neighbor]))
+                    new_path = path + [neighbor]
+                    heappush(new_queue, (manhattan_distance(neighbor, goal), new_path))
                     states_explored += 1
+        queue = new_queue
+    path, bfs_states = bfs_search(start, goal)
+    states_explored += bfs_states
+    return path, states_explored
 
-    return [], states_explored
+# thuật toán AND_OR_TREE_Search
+def and_or_tree_search(start, goal):
+    # Định nghĩa lối ra và ngưỡng cố định bên trong hàm
+    exit_pos = (GRID_WIDTH-1, GRID_HEIGHT-1)  # Góc dưới bên phải
+    threshold = 20  # Ngưỡng khoảng cách phù hợp cho lưới 20x20
 
-
-def min_conflicts_search(start, goal):
-    max_iterations = 300
+    # Trạng thái: (position, path)
+    # position: Tọa độ hiện tại (x, y)
+    # path: Đường đi từ start đến position
+    queue = deque([(start, [start])])
+    visited = set()  # Lưu position để tránh chu kỳ
     states_explored = 1
 
-    # Bắt đầu với một đường đi ngẫu nhiên từ start
-    current_path = [start]
-    current_pos = start
+    # Tính khoảng cách từ người chơi đến lối ra
+    player_to_exit_dist = manhattan_distance(goal, exit_pos)
+    prioritize_exit = player_to_exit_dist > threshold  # Nếu người chơi ở xa lối ra, ưu tiên lối ra
 
-    # Khởi tạo đường đi ban đầu: di chuyển ngẫu nhiên trong 10 bước
-    for _ in range(10):
-        neighbors = get_neighbors(current_pos)
-        if not neighbors:
-            break
-        next_pos = random.choice(neighbors)
-        current_path.append(next_pos)
-        current_pos = next_pos
-        states_explored += len(neighbors)  # Đếm số hàng xóm được xem xét
+    while queue:
+        state, path = queue.popleft()
+        position = state
 
-    # Min-Conflicts: Lặp lại để cải thiện đường đi
-    for _ in range(max_iterations):
-        if current_path[-1] == goal:
-            return current_path, states_explored
-
-        # Tính xung đột hiện tại (khoảng cách từ ô cuối đến goal)
-        current_conflict = heuristic(current_path[-1], goal)
-
-        # Chọn ngẫu nhiên một ô trong đường đi để thay thế (trừ ô đầu và ô cuối)
-        if len(current_path) > 2:
-            idx = random.randint(1, len(current_path) - 2)
-        else:
-            idx = 0  # Nếu đường đi quá ngắn, chọn ô đầu tiên
-
-        # Lấy ô hiện tại tại vị trí idx
-        pos = current_path[idx]
-        neighbors = get_neighbors(pos)
-        if not neighbors:
+        if position in visited:
             continue
+        visited.add(position)
 
-        # Tìm ô lân cận có xung đột thấp nhất (khoảng cách đến goal)
-        best_neighbor = pos
-        best_conflict = current_conflict
+        # Kiểm tra nếu đã đến goal
+        if position == goal:
+            return path, states_explored
+
+        # Khám phá các ô lân cận (OR nodes: lựa chọn giữa các hướng di chuyển)
+        neighbors = get_neighbors(position)  # Hành động 1: Di chuyển đến ô phù hợp (AND)
+        states_explored += len(neighbors)
+
+        # Sắp xếp ô lân cận dựa trên mục tiêu (Hành động 2: Xu hướng đến lối ra, AND)
+        if prioritize_exit:
+            # Ưu tiên lối ra nếu người chơi ở xa lối ra
+            neighbors.sort(key=lambda pos: manhattan_distance(pos, exit_pos))
+        else:
+            # Đuổi theo người chơi nếu người chơi ở gần lối ra
+            neighbors.sort(key=lambda pos: manhattan_distance(pos, goal))
+
+        # Thêm các ô lân cận vào hàng đợi
         for neighbor in neighbors:
-            # Thay thế ô tại idx bằng neighbor và tính xung đột mới
-            new_path = current_path[:idx] + [neighbor] + current_path[idx+1:]
-            new_conflict = heuristic(new_path[-1], goal)
-            states_explored += 1  # Đếm trạng thái được khám phá
-            if new_conflict < best_conflict:
-                best_conflict = new_conflict
-                best_neighbor = neighbor
+            if neighbor in path:  # Kiểm tra chu kỳ trong path
+                continue
+            if neighbor not in visited:
+                new_path = path + [neighbor]
+                queue.append((neighbor, new_path))
 
-        # Cập nhật đường đi nếu tìm được ô tốt hơn
-        if best_neighbor != pos:
-            current_path = current_path[:idx] + [best_neighbor] + current_path[idx+1:]
+    return path, states_explored
+
+
+def can_reach_goal(pos, goal, visited, grid):
+    """Kiểm tra xem từ pos có thể đến goal không, sử dụng A*."""
+    frontier = [(0, pos)]  # (f_score, position)
+    came_from = {pos: None}
+    cost_so_far = {pos: 0}
+    local_visited = {pos}
+
+    while frontier:
+        _, current = heappop(frontier)
+        if current == goal:
+            return True
+        for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
+            next_pos = (current[0] + dx, current[1] + dy)
+            x, y = next_pos
+            if (0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT and grid[y][x] != 1 and
+                    next_pos not in visited and next_pos not in local_visited):
+                new_cost = cost_so_far[current] + 1
+                local_visited.add(next_pos)
+                cost_so_far[next_pos] = new_cost
+                priority = new_cost + heuristic_(next_pos, goal, grid)
+                heappush(frontier, (priority, next_pos))
+                came_from[next_pos] = current
+    return False
+
+def heuristic_(pos, goal, grid):
+    """Heuristic kết hợp khoảng cách Manhattan và số tường lân cận."""
+    manhattan_dist = abs(pos[0] - goal[0]) + abs(pos[1] - goal[1])
+    x, y = pos
+    obstacle_penalty = 0
+    for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
+        nx, ny = x + dx, y + dy
+        if 0 <= nx < GRID_WIDTH and 0 <= ny < GRID_HEIGHT:
+            if grid[ny][nx] == 1:  # Tường
+                obstacle_penalty += 0.5
+    return manhattan_dist + obstacle_penalty
+
+
+def forward_checking_search(start, goal):
+    """
+    Forward Checking Search cải tiến sử dụng Best-First Search.
+    """
+    # Kiểm tra vị trí khởi tạo
+    print(f"Start: {start}, Goal: {goal}")
+
+    # Hàng đợi ưu tiên cho Best-First Search: (f_score, position, path)
+    frontier = [(heuristic_(start, goal, grid), start, [start])]
+    visited = set([start])
+    states_explored = 1
+    reachability_cache = {}  # Cache cho can_reach_goal
+
+    while frontier:
+        f_score, position, path = heappop(frontier)
+
+        if position == goal:
+            return path, states_explored
+
+        # Khám phá các ô lân cận
+        neighbors = get_neighbors(position)
+        states_explored += len(neighbors)
+
+        # Sắp xếp ô lân cận theo heuristic
+        neighbors_with_cost = [(n, heuristic_(n, goal, grid)) for n in neighbors]
+        neighbors_with_cost.sort(key=lambda x: x[1])
+
+        for neighbor, _ in neighbors_with_cost:
+            if neighbor in path or neighbor in visited:
+                continue
+
+            # Kiểm tra cache trước
+            cache_key = (neighbor, goal)
+            if cache_key in reachability_cache:
+                can_reach = reachability_cache[cache_key]
+            else:
+                can_reach = can_reach_goal(neighbor, goal, visited, grid)
+                reachability_cache[cache_key] = can_reach
+                states_explored += 1  # Đếm thêm trạng thái khi kiểm tra
+
+            if can_reach:
+                visited.add(neighbor)
+                new_path = path + [neighbor]
+                new_f_score = heuristic_(neighbor, goal, grid)
+                heappush(frontier, (new_f_score, neighbor, new_path))
 
     # Nếu không tìm thấy đường đi, dùng BFS làm dự phòng
-    bfs_path, bfs_states = bfs_search(start, goal)
+    path, bfs_states = bfs_search(start, goal)
     states_explored += bfs_states
-    return bfs_path if bfs_path else [], states_explored
+    print(f"Forward Checking Search failed, falling back to BFS: {path}")
+    return path if path else [], states_explored
 
 
 q_table = {}  # Từ điển: {state: {action: q_value}}
@@ -1076,11 +1141,13 @@ class Enemy(pygame.sprite.Sprite):
     def update(self):
         delta_time = clock.get_time() / 1000.0
 
+        # Xử lý trạng thái làm chậm
         if self.slow_timer > 0:
             self.slow_timer -= 1
             if self.slow_timer <= 0:
                 self.speed = self.default_speed
 
+        # Xử lý trạng thái tàng hình
         if self.invisibility_timer > 0:
             self.invisibility_timer -= 1
             self.image.set_alpha(128)
@@ -1101,10 +1168,7 @@ class Enemy(pygame.sprite.Sprite):
                         self.path = [self.grid_pos[:], list(next_pos)]
                         self.target_pixel_pos = list(to_pixel_pos(next_pos[0], next_pos[1]))
                         self.moving = True
-
                         break
-
-
             else:
                 target_pos = tuple(self.player.grid_pos)
                 self.path, _ = choose_algorithm(tuple(self.grid_pos), target_pos, self.algorithm)
@@ -1117,7 +1181,7 @@ class Enemy(pygame.sprite.Sprite):
                     next_grid_pos = self.path[1]
                     x, y = next_grid_pos
                     if 0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT and grid[y][x] != 1:
-                        self.target_pixel_pos = list(to_pixel_pos(next_grid_pos[0], next_grid_pos[1]))
+                        self.target_pixel_pos = list(to_pixel_pos(next_grid_pos[0], next_grid_pos[1]))  # Fixed here
                         self.moving = True
                     else:
                         self.path = self.last_path[:] if self.last_path else []
@@ -1138,26 +1202,35 @@ class Enemy(pygame.sprite.Sprite):
         if self.moving and len(self.path) > 1:
             dx = self.target_pixel_pos[0] - self.pixel_pos[0]
             dy = self.target_pixel_pos[1] - self.pixel_pos[1]
-            distance = max(abs(dx), abs(dy))
-
+            distance = (dx ** 2 + dy ** 2) ** 0.5  # Khoảng cách Euclidean
             speed = self.speed * delta_time
-            if distance > speed:
+            epsilon = 1.0  # Ngưỡng để xác định đã đến trung tâm ô
+
+            if distance > epsilon:
+                # Di chuyển theo trục chính để tránh đi xéo
                 if abs(dx) > abs(dy):
                     speed_x = speed if dx > 0 else -speed
                     speed_y = 0
                 else:
                     speed_x = 0
                     speed_y = speed if dy > 0 else -speed
+
+                # Giới hạn tốc độ để không vượt quá mục tiêu
+                if abs(speed_x) > abs(dx):
+                    speed_x = dx
+                if abs(speed_y) > abs(dy):
+                    speed_y = dy
+
                 self.pixel_pos[0] += speed_x
                 self.pixel_pos[1] += speed_y
             else:
+                # Đã đến trung tâm ô, cập nhật grid_pos và path
                 self.pixel_pos = self.target_pixel_pos[:]
                 next_grid_pos = self.path[1]
                 x, y = next_grid_pos
                 if 0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT and grid[y][x] != 1:
                     self.grid_pos = list(next_grid_pos)
                     self.path.pop(0)
-                    self.pixel_pos = list(to_pixel_pos(self.grid_pos[0], self.grid_pos[1]))
                     if len(self.path) > 1:
                         next_grid_pos = self.path[1]
                         x, y = next_grid_pos
@@ -1168,13 +1241,11 @@ class Enemy(pygame.sprite.Sprite):
                             self.moving = False
                     else:
                         self.moving = False
-
                 else:
                     self.path = self.last_path[:] if self.last_path else []
                     self.moving = False
+
             self.rect.center = (int(self.pixel_pos[0]), int(self.pixel_pos[1]))
-
-
 
 # Danh sách lưu trữ thông tin chi tiết của thuật toán
 algorithm_runs = []
@@ -1200,14 +1271,14 @@ def choose_algorithm(start, goal, selected_algorithm):
         path, states_explored = a_star_search(start, goal)
     # elif algorithm == 'IDA*':
     #     path, states_explored = ida_star_search(start, goal)
-    elif algorithm == 'Simulated Annealing':
-        path, states_explored = simulated_annealing_search(start, goal)
-    # elif algorithm == 'Beam Search':
-    #     path, states_explored = beam_search(start, goal)
+    # elif algorithm == 'Simulated Annealing':
+    #     path, states_explored = simulated_annealing_search(start, goal)
+    elif algorithm == 'Beam Search':
+        path, states_explored = beam_search(start, goal)
     elif algorithm == 'AND-OR Tree':
         path, states_explored = and_or_tree_search(start, goal)
-    elif algorithm == 'Min-Conflicts':
-        path, states_explored = min_conflicts_search(start, goal)
+    elif algorithm == 'Forward Checking':
+        path, states_explored = forward_checking_search(start, goal)
     elif algorithm == 'Q-Learning':
         path, states_explored = q_learning_search(start, goal)
 
@@ -1252,7 +1323,7 @@ def plot_comparison():
     print("Performance data:", performance_data)
 
     # Danh sách thuật toán
-    algorithms = ['BFS', 'A*', 'Simulated Annealing', 'AND-OR Tree', 'Min-Conflicts', 'Q-Learning']
+    algorithms = ['BFS', 'A*', 'Beam Search', 'AND-OR Tree', 'Forward Checking', 'Q-Learning']
 
     # Dữ liệu cho biểu đồ
     states_explored = [performance_data[algo]['states'] for algo in algorithms]
@@ -1726,7 +1797,7 @@ def splash_screen():
 def menu_screen():
     global frame_index
     menu_active = True
-    algorithm_options = ["BFS","A*","Simulated Annealing", "AND-OR Tree","Min-Conflicts", "Q-Learning"]
+    algorithm_options = ["BFS","A*","Beam Search", "AND-OR Tree","Forward Checking", "Q-Learning"]
     difficulty_options = ["Easy", "Medium", "Hard"]
     selected_algorithm = 0
     selected_difficulty = 0
@@ -1739,8 +1810,8 @@ def menu_screen():
     except:
         print("Không thể tải menu_music.mp3")
 
-    title_font = pygame.font.Font("freesansbold.ttf", 60)
-    option_font = pygame.font.Font("freesansbold.ttf", 40)
+    title_font = pygame.font.Font("freesansbold.ttf", 80)
+    option_font = pygame.font.Font("freesansbold.ttf", 50)
     FPS = 60  # Đồng bộ với game chính
 
     while menu_active:
