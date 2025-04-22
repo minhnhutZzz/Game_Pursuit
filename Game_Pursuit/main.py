@@ -666,22 +666,13 @@ def beam_search(start, goal):
     states_explored += bfs_states
     return path, states_explored
 
-# thuật toán AND_OR_TREE_Search
 def and_or_tree_search(start, goal):
-    # Định nghĩa lối ra và ngưỡng cố định bên trong hàm
-    exit_pos = (GRID_WIDTH-1, GRID_HEIGHT-1)  # Góc dưới bên phải
-    threshold = 20  # Ngưỡng khoảng cách phù hợp cho lưới 20x20
-
     # Trạng thái: (position, path)
     # position: Tọa độ hiện tại (x, y)
     # path: Đường đi từ start đến position
     queue = deque([(start, [start])])
     visited = set()  # Lưu position để tránh chu kỳ
     states_explored = 1
-
-    # Tính khoảng cách từ người chơi đến lối ra
-    player_to_exit_dist = manhattan_distance(goal, exit_pos)
-    prioritize_exit = player_to_exit_dist > threshold  # Nếu người chơi ở xa lối ra, ưu tiên lối ra
 
     while queue:
         state, path = queue.popleft()
@@ -696,36 +687,68 @@ def and_or_tree_search(start, goal):
             return path, states_explored
 
         # Khám phá các ô lân cận (OR nodes: lựa chọn giữa các hướng di chuyển)
-        neighbors = get_neighbors(position)  # Hành động 1: Di chuyển đến ô phù hợp (AND)
-        states_explored += len(neighbors)
+        directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]  # Xuống, lên, phải, trái
+        possible_moves = []
 
-        # Sắp xếp ô lân cận dựa trên mục tiêu (Hành động 2: Xu hướng đến lối ra, AND)
-        if prioritize_exit:
-            # Ưu tiên lối ra nếu người chơi ở xa lối ra
-            neighbors.sort(key=lambda pos: manhattan_distance(pos, exit_pos))
-        else:
-            # Đuổi theo người chơi nếu người chơi ở gần lối ra
-            neighbors.sort(key=lambda pos: manhattan_distance(pos, goal))
+        # Với mỗi hướng OR, tạo các kết quả AND (di chuyển 1, 2, hoặc 3 ô)
+        for dx, dy in directions:
+            # Nhánh AND: Di chuyển 1, 2, hoặc 3 ô theo hướng
+            for steps in range(1, 4):  # Di chuyển 1, 2, hoặc 3 ô
+                next_x = position[0] + dx * steps
+                next_y = position[1] + dy * steps
+                next_pos = (next_x, next_y)
 
-        # Thêm các ô lân cận vào hàng đợi
-        for neighbor in neighbors:
-            if neighbor in path:  # Kiểm tra chu kỳ trong path
-                continue
-            if neighbor not in visited:
-                new_path = path + [neighbor]
-                queue.append((neighbor, new_path))
+                # Kiểm tra tính hợp lệ của toàn bộ đường đi
+                valid = True
+                # Kiểm tra ô đích có nằm trong lưới và không phải tường không
+                if not (0 <= next_x < GRID_WIDTH and 0 <= next_y < GRID_HEIGHT and grid[next_y][next_x] != 1):
+                    valid = False
+                else:
+                    # Kiểm tra các ô trung gian trên đường đi
+                    for s in range(1, steps):  # Chỉ kiểm tra các ô trung gian, không bao gồm ô đích
+                        check_x = position[0] + dx * s
+                        check_y = position[1] + dy * s
+                        if not (0 <= check_x < GRID_WIDTH and 0 <= check_y < GRID_HEIGHT and grid[check_y][check_x] != 1):
+                            valid = False
+                            break
+
+                # Nếu toàn bộ đường đi hợp lệ và ô đích chưa được thăm
+                if valid and next_pos not in visited and next_pos not in path:
+                    # Gán xác suất cho từng kết quả AND
+                    prob = random.random()
+                    if steps == 1 and prob < 0.7:  # 70% di chuyển 1 ô
+                        possible_moves.append((next_pos, steps))
+                    elif steps == 2 and prob < 0.9:  # 20% di chuyển 2 ô
+                        possible_moves.append((next_pos, steps))
+                    elif steps == 3 and prob < 1.0:  # 10% di chuyển 3 ô
+                        possible_moves.append((next_pos, steps))
+
+        states_explored += len(possible_moves)
+
+        # Sắp xếp ô đích theo khoảng cách đến goal
+        possible_moves.sort(key=lambda move: manhattan_distance(move[0], goal))
+
+        # Thêm các ô đích vào hàng đợi
+        for next_pos, steps in possible_moves:
+            new_path = path + [next_pos]
+            queue.append((next_pos, new_path))
 
     return path, states_explored
 
 
 def can_reach_goal(pos, goal, visited, grid):
-    """Kiểm tra xem từ pos có thể đến goal không, sử dụng A*."""
+    """Kiểm tra xem từ pos có thể đến goal không, sử dụng A* với giới hạn."""
     frontier = [(0, pos)]  # (f_score, position)
     came_from = {pos: None}
     cost_so_far = {pos: 0}
     local_visited = {pos}
+    max_states = 100  # Giới hạn số trạng thái
+    states_checked = 0
 
     while frontier:
+        states_checked += 1
+        if states_checked > max_states:
+            return False
         _, current = heappop(frontier)
         if current == goal:
             return True
@@ -737,33 +760,21 @@ def can_reach_goal(pos, goal, visited, grid):
                 new_cost = cost_so_far[current] + 1
                 local_visited.add(next_pos)
                 cost_so_far[next_pos] = new_cost
-                priority = new_cost + heuristic_(next_pos, goal, grid)
+                priority = new_cost + heuristic(next_pos, goal)  # Bỏ tham số grid
                 heappush(frontier, (priority, next_pos))
                 came_from[next_pos] = current
     return False
-
-def heuristic_(pos, goal, grid):
-    """Heuristic kết hợp khoảng cách Manhattan và số tường lân cận."""
-    manhattan_dist = abs(pos[0] - goal[0]) + abs(pos[1] - goal[1])
-    x, y = pos
-    obstacle_penalty = 0
-    for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
-        nx, ny = x + dx, y + dy
-        if 0 <= nx < GRID_WIDTH and 0 <= ny < GRID_HEIGHT:
-            if grid[ny][nx] == 1:  # Tường
-                obstacle_penalty += 0.5
-    return manhattan_dist + obstacle_penalty
-
 
 def forward_checking_search(start, goal):
     """
     Forward Checking Search cải tiến sử dụng Best-First Search.
     """
-    # Kiểm tra vị trí khởi tạo
-    print(f"Start: {start}, Goal: {goal}")
+    # Kiểm tra sớm xem mục tiêu có thể đạt được không
+    if not can_reach_goal(start, goal, set(), grid):
+        return [], 1
 
     # Hàng đợi ưu tiên cho Best-First Search: (f_score, position, path)
-    frontier = [(heuristic_(start, goal, grid), start, [start])]
+    frontier = [(heuristic(start, goal), start, [start])]  # Bỏ tham số grid
     visited = set([start])
     states_explored = 1
     reachability_cache = {}  # Cache cho can_reach_goal
@@ -779,7 +790,7 @@ def forward_checking_search(start, goal):
         states_explored += len(neighbors)
 
         # Sắp xếp ô lân cận theo heuristic
-        neighbors_with_cost = [(n, heuristic_(n, goal, grid)) for n in neighbors]
+        neighbors_with_cost = [(n, heuristic(n, goal)) for n in neighbors]  # Bỏ tham số grid
         neighbors_with_cost.sort(key=lambda x: x[1])
 
         for neighbor, _ in neighbors_with_cost:
@@ -794,17 +805,16 @@ def forward_checking_search(start, goal):
                 can_reach = can_reach_goal(neighbor, goal, visited, grid)
                 reachability_cache[cache_key] = can_reach
                 states_explored += 1  # Đếm thêm trạng thái khi kiểm tra
+                # Giới hạn kích thước cache
+                if len(reachability_cache) > 1000:
+                    reachability_cache.pop(next(iter(reachability_cache)))
 
             if can_reach:
                 visited.add(neighbor)
                 new_path = path + [neighbor]
-                new_f_score = heuristic_(neighbor, goal, grid)
+                new_f_score = heuristic(neighbor, goal)  # Bỏ tham số grid
                 heappush(frontier, (new_f_score, neighbor, new_path))
 
-    # Nếu không tìm thấy đường đi, dùng BFS làm dự phòng
-    path, bfs_states = bfs_search(start, goal)
-    states_explored += bfs_states
-    print(f"Forward Checking Search failed, falling back to BFS: {path}")
     return path if path else [], states_explored
 
 
@@ -893,13 +903,6 @@ def q_learning_search(start, goal, max_steps=50):
         visited.add(next_pos)
         path.append(next_pos)
         current_pos = next_pos
-
-    # Nếu không đến được mục tiêu, dùng BFS làm dự phòng
-    if path[-1] != goal:
-        bfs_path, bfs_states = bfs_search(start, goal)
-        states_explored += bfs_states
-
-        return bfs_path if bfs_path else path, states_explored
 
     return path, states_explored
 
@@ -1154,6 +1157,7 @@ class Enemy(pygame.sprite.Sprite):
         else:
             self.image.set_alpha(255)
 
+        # Cập nhật đường đi
         self.path_update_timer += 1
         if self.path_update_timer >= self.path_update_interval:
             self.path_update_timer = 0
@@ -1173,18 +1177,26 @@ class Enemy(pygame.sprite.Sprite):
                 target_pos = tuple(self.player.grid_pos)
                 self.path, _ = choose_algorithm(tuple(self.grid_pos), target_pos, self.algorithm)
 
+                # Kiểm tra và loại bỏ các ô tường trong path, nhưng giữ các ô hợp lệ tiếp theo
+                if self.path:
+                    valid_path = [self.path[0]]  # Luôn giữ ô đầu tiên (vị trí hiện tại)
+                    for pos in self.path[1:]:
+                        x, y = pos
+                        if 0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT and grid[y][x] != 1:
+                            valid_path.append(pos)
+                        # Không dùng break, tiếp tục kiểm tra các ô tiếp theo
+                    self.path = valid_path if len(valid_path) > 1 else [self.grid_pos]
+
                 if self.path and len(self.path) > 1:
                     self.last_path = self.path[:]
-                else:
-                    self.path = self.last_path[:] if self.last_path else []
-                if len(self.path) > 1:
                     next_grid_pos = self.path[1]
                     x, y = next_grid_pos
                     if 0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT and grid[y][x] != 1:
-                        self.target_pixel_pos = list(to_pixel_pos(next_grid_pos[0], next_grid_pos[1]))  # Fixed here
+                        self.target_pixel_pos = list(to_pixel_pos(next_grid_pos[0], next_grid_pos[1]))
                         self.moving = True
                     else:
-                        self.path = self.last_path[:] if self.last_path else []
+                        self.path = self.last_path[:] if self.last_path else [self.grid_pos]
+                        self.moving = False
                 else:
                     directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
                     random.shuffle(directions)
@@ -1199,6 +1211,7 @@ class Enemy(pygame.sprite.Sprite):
                     else:
                         self.moving = False
 
+        # Xử lý di chuyển
         if self.moving and len(self.path) > 1:
             dx = self.target_pixel_pos[0] - self.pixel_pos[0]
             dy = self.target_pixel_pos[1] - self.pixel_pos[1]
@@ -1237,15 +1250,16 @@ class Enemy(pygame.sprite.Sprite):
                         if 0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT and grid[y][x] != 1:
                             self.target_pixel_pos = list(to_pixel_pos(next_grid_pos[0], next_grid_pos[1]))
                         else:
-                            self.path = self.last_path[:] if self.last_path else []
+                            self.path = self.last_path[:] if self.last_path else [self.grid_pos]
                             self.moving = False
                     else:
                         self.moving = False
                 else:
-                    self.path = self.last_path[:] if self.last_path else []
+                    self.path = self.last_path[:] if self.last_path else [self.grid_pos]
                     self.moving = False
 
             self.rect.center = (int(self.pixel_pos[0]), int(self.pixel_pos[1]))
+
 
 # Danh sách lưu trữ thông tin chi tiết của thuật toán
 algorithm_runs = []
