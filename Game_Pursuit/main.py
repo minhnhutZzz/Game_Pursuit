@@ -249,7 +249,8 @@ def draw_grid(exit_pos=None):
                 pass
             elif grid[y][x] == 2:  # Lối ra
                 pygame.draw.rect(screen, YELLOW, rect)
-                pygame.draw.rect(screen, BLACK, rect, 2)
+                screen.blit(door_img, (rect.x + 2.5, rect.y + 2.5))
+                pygame.draw.rect(screen, BLACK, rect, 1)
             elif grid[y][x] == 3:  # Tăng tốc
                 pygame.draw.rect(screen, LIGHT_GREEN, rect)
                 screen.blit(speed_boost_img, (rect.x + 2.5, rect.y + 2.5))
@@ -947,6 +948,7 @@ class Player(pygame.sprite.Sprite):
         self.moving = False
         self.target_pixel_pos = self.pixel_pos[:]
         self.direction = (0, 0)
+        self.door_sound_played = False
 
     def pick_star(self):
         self.stars_collected += 1
@@ -1159,32 +1161,33 @@ class Enemy(pygame.sprite.Sprite):
 
         # Cập nhật đường đi
         self.path_update_timer += 1
-        if self.path_update_timer >= self.path_update_interval:
+        if self.path_update_timer >= self.path_update_interval and not self.moving:
             self.path_update_timer = 0
 
             if self.invisibility_timer > 0:
-                directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
-                random.shuffle(directions)
-                for dx, dy in directions:
-                    next_pos = (self.grid_pos[0] + dx, self.grid_pos[1] + dy)
-                    x, y = next_pos
-                    if (0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT and grid[y][x] != 1):
-                        self.path = [self.grid_pos[:], list(next_pos)]
-                        self.target_pixel_pos = list(to_pixel_pos(next_pos[0], next_pos[1]))
-                        self.moving = True
-                        break
+                # Lấy danh sách ô lân cận hợp lệ
+                neighbors = get_neighbors(tuple(self.grid_pos))
+                if neighbors:
+                    # Chọn ngẫu nhiên một ô lân cận
+                    next_pos = random.choice(neighbors)
+                    self.path = [self.grid_pos[:], list(next_pos)]
+                    self.target_pixel_pos = list(to_pixel_pos(next_pos[0], next_pos[1]))
+                    self.moving = True
+                else:
+                    # Nếu không có ô lân cận hợp lệ, dừng di chuyển
+                    self.path = [self.grid_pos[:]]
+                    self.moving = False
             else:
                 target_pos = tuple(self.player.grid_pos)
                 self.path, _ = choose_algorithm(tuple(self.grid_pos), target_pos, self.algorithm)
 
-                # Kiểm tra và loại bỏ các ô tường trong path, nhưng giữ các ô hợp lệ tiếp theo
+                # Kiểm tra và loại bỏ các ô tường trong path
                 if self.path:
-                    valid_path = [self.path[0]]  # Luôn giữ ô đầu tiên (vị trí hiện tại)
+                    valid_path = [self.path[0]]  # Giữ ô đầu tiên (vị trí hiện tại)
                     for pos in self.path[1:]:
                         x, y = pos
                         if 0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT and grid[y][x] != 1:
                             valid_path.append(pos)
-                        # Không dùng break, tiếp tục kiểm tra các ô tiếp theo
                     self.path = valid_path if len(valid_path) > 1 else [self.grid_pos]
 
                 if self.path and len(self.path) > 1:
@@ -1198,16 +1201,13 @@ class Enemy(pygame.sprite.Sprite):
                         self.path = self.last_path[:] if self.last_path else [self.grid_pos]
                         self.moving = False
                 else:
-                    directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
-                    random.shuffle(directions)
-                    for dx, dy in directions:
-                        next_pos = (self.grid_pos[0] + dx, self.grid_pos[1] + dy)
-                        x, y = next_pos
-                        if (0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT and grid[y][x] != 1):
-                            self.path = [self.grid_pos[:], list(next_pos)]
-                            self.target_pixel_pos = list(to_pixel_pos(next_pos[0], next_pos[1]))
-                            self.moving = True
-                            break
+                    # Nếu không có đường đi, thử di chuyển ngẫu nhiên
+                    neighbors = get_neighbors(tuple(self.grid_pos))
+                    if neighbors:
+                        next_pos = random.choice(neighbors)
+                        self.path = [self.grid_pos[:], list(next_pos)]
+                        self.target_pixel_pos = list(to_pixel_pos(next_pos[0], next_pos[1]))
+                        self.moving = True
                     else:
                         self.moving = False
 
@@ -1244,18 +1244,9 @@ class Enemy(pygame.sprite.Sprite):
                 if 0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT and grid[y][x] != 1:
                     self.grid_pos = list(next_grid_pos)
                     self.path.pop(0)
-                    if len(self.path) > 1:
-                        next_grid_pos = self.path[1]
-                        x, y = next_grid_pos
-                        if 0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT and grid[y][x] != 1:
-                            self.target_pixel_pos = list(to_pixel_pos(next_grid_pos[0], next_grid_pos[1]))
-                        else:
-                            self.path = self.last_path[:] if self.last_path else [self.grid_pos]
-                            self.moving = False
-                    else:
-                        self.moving = False
+                    self.moving = False  # Dừng di chuyển để chờ cập nhật hướng mới
                 else:
-                    self.path = self.last_path[:] if self.last_path else [self.grid_pos]
+                    self.path = [self.grid_pos[:]]
                     self.moving = False
 
             self.rect.center = (int(self.pixel_pos[0]), int(self.pixel_pos[1]))
@@ -1607,6 +1598,16 @@ try:
 except Exception as e:
     print(f"Không thể tải hình ảnh ngôi sao: {e}")
 
+# Tải hình ảnh cánh cửa
+try:
+    door_img = pygame.image.load(r"asset\anh_icon\canhcua.png").convert_alpha()
+    door_img = pygame.transform.scale(door_img, (GRID_SIZE - 5, GRID_SIZE - 5))
+except Exception as e:
+    print(f"Không thể tải hình ảnh cánh cửa: {e}")
+    door_img = pygame.Surface((GRID_SIZE - 5, GRID_SIZE - 5), pygame.SRCALPHA)
+    pygame.draw.rect(door_img, YELLOW, (0, 0, GRID_SIZE - 5, GRID_SIZE - 5))
+
+
 # tai am thanh nhat vat pham
 try:
     pickup_sound = pygame.mixer.Sound(r"asset\nhac\nhac_nhat_do.mp3")
@@ -1641,6 +1642,13 @@ try:
 except Exception as e:
     print(f"Không thể tải âm thanh nổ bom: {e}")
     bomb_sound = None
+
+# Tải âm thanh mở cửa
+try:
+    door_open_sound = pygame.mixer.Sound(r"asset\nhac\nhac_mo_cua.mp3")
+except Exception as e:
+    print(f"Không thể tải âm thanh mở cửa: {e}")
+    door_open_sound = None
 
 
 # class hieu ung no bom
@@ -2255,7 +2263,7 @@ while running:
                         game_active = False
                         running = False
                     elif event.type == pygame.KEYDOWN:
-                        if event.key == pygame.K_b:
+                        if event.key == pygame.K_SPACE:
                             player.use_bomb()
 
                 all_sprites.update()
@@ -2296,15 +2304,21 @@ while running:
                 if tuple(player.grid_pos) == exit_pos:
                     if player.has_key:
                         if player.unlock_timer == 0:
-                            player.unlock_timer = 5 * FPS
+                            player.unlock_timer = 3 * FPS
+                            player.door_sound_played = False
+
                     else:
                         if player.show_key_message_timer == 0:
                             player.show_key_message_timer = 1 * FPS
                 else:
                     if player.unlock_timer > 0:
                         player.unlock_timer = 0
+                        player.door_sound_played = False
 
                 if player.unlock_timer <= 1 and tuple(player.grid_pos) == exit_pos and player.has_key:
+                    if not player.door_sound_played and door_open_sound:
+                        door_open_sound.play()
+                        player.door_sound_played = True
                     player.has_key = False
                     total_map_score += map_score
                     current_map_idx += 1
