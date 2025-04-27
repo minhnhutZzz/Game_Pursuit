@@ -17,7 +17,7 @@ import pandas as pd
 
 
 
-current_map_index = 0  # Cập nhật biến này trong game loop khi chuyển map
+current_map_index = 0
 
 # Từ điển lưu dữ liệu hiệu suất cho map đầu tiên
 performance_data = {
@@ -532,29 +532,6 @@ def get_neighbors(pos):
 def manhattan_distance(pos1, pos2):
     return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
 
-def get_action_from_direction(dx, dy):
-    """Chuyển đổi hướng di chuyển thành hành động (0: lên, 1: xuống, 2: phải, 3: trái)."""
-    if dx == 0 and dy == -1:
-        return 0  # Lên
-    elif dx == 0 and dy == 1:
-        return 1  # Xuống
-    elif dx == 1 and dy == 0:
-        return 2  # Phải
-    elif dx == -1 and dy == 0:
-        return 3  # Trái
-    return None
-
-def get_direction_from_action(action):
-    """Chuyển đổi hành động thành hướng di chuyển (dx, dy)."""
-    if action == 0:  # Lên
-        return 0, -1
-    elif action == 1:  # Xuống
-        return 0, 1
-    elif action == 2:  # Phải
-        return 1, 0
-    elif action == 3:  # Trái
-        return -1, 0
-    return 0, 0
 
 # #--- Thuật toán Simulated Annealing ---
 # def simulated_annealing_search(start, goal):
@@ -818,11 +795,34 @@ def forward_checking_search(start, goal):
 
     return path if path else [], states_explored
 
+def get_action_from_direction(dx, dy):
+    """Chuyển đổi hướng di chuyển thành hành động (0: lên, 1: xuống, 2: phải, 3: trái)."""
+    if dx == 0 and dy == -1:
+        return 0  # Lên
+    elif dx == 0 and dy == 1:
+        return 1  # Xuống
+    elif dx == 1 and dy == 0:
+        return 2  # Phải
+    elif dx == -1 and dy == 0:
+        return 3  # Trái
+    return None
+
+def get_direction_from_action(action):
+    """Chuyển đổi hành động thành hướng di chuyển (dx, dy)."""
+    if action == 0:  # Lên
+        return 0, -1
+    elif action == 1:  # Xuống
+        return 0, 1
+    elif action == 2:  # Phải
+        return 1, 0
+    elif action == 3:  # Trái
+        return -1, 0
+    return 0, 0
 
 q_table = {}  # Từ điển: {state: {action: q_value}}
-epsilon = 0.3  # Giá trị epsilon ban đầu, sẽ giảm dần
+epsilon = 0.5  # Giá trị epsilon ban đầu, sẽ giảm dần
 
-def q_learning_search(start, goal, max_steps=50):
+def q_learning_search(start, goal, max_steps=100):
     """
     Q-Learning để tìm đường đi từ start đến goal.
     Trả về đường đi (path) và số trạng thái đã khám phá (states_explored).
@@ -832,13 +832,13 @@ def q_learning_search(start, goal, max_steps=50):
     # Tham số Q-Learning
     alpha = 0.1  # Learning rate
     gamma = 0.9  # Discount factor
-    epsilon = max(0.1, epsilon * 0.995)  # Giảm epsilon dần để tăng khai thác
+    epsilon = max(0.05, epsilon * 0.95)  # Giảm epsilon nhanh hơn để tăng khai thác
 
     # Khởi tạo đường đi
     path = [start]
     current_pos = start
-    states_explored = 0  # Đếm số trạng thái mới được khám phá
-    visited = set()  # Theo dõi các trạng thái đã thăm để tránh chu kỳ
+    states_explored = 0
+    visited = set()
 
     # Mô phỏng nhiều bước để tạo đường đi đầy đủ
     for _ in range(max_steps):
@@ -851,7 +851,7 @@ def q_learning_search(start, goal, max_steps=50):
         # Khởi tạo Q-table cho trạng thái nếu chưa tồn tại
         if state not in q_table:
             q_table[state] = {a: 0.0 for a in range(4)}  # 4 hành động: lên, xuống, phải, trái
-            states_explored += 1  # Tăng số trạng thái nếu trạng thái mới
+            states_explored += 1
 
         # Chọn hành động theo chiến lược epsilon-greedy
         if random.random() < epsilon:
@@ -866,26 +866,26 @@ def q_learning_search(start, goal, max_steps=50):
         # Kiểm tra xem ô tiếp theo có hợp lệ không
         neighbors = get_neighbors(current_pos)
         if next_pos not in neighbors:
-            # Nếu hành động không hợp lệ, chọn lại hành động hợp lệ
+            # Nếu hành động không hợp lệ, chọn hành động tốt nhất dựa trên Q-table
             valid_actions = [get_action_from_direction(n[0] - current_pos[0], n[1] - current_pos[1]) for n in neighbors]
             if valid_actions:
-                action = random.choice(valid_actions)
+                # Chọn hành động có Q-value cao nhất trong các hành động hợp lệ
+                q_values = {a: q_table[state][a] for a in valid_actions}
+                action = max(q_values, key=q_values.get)
                 dx, dy = get_direction_from_action(action)
                 next_pos = (current_pos[0] + dx, current_pos[1] + dy)
             else:
                 break  # Không có ô hợp lệ, dừng lại
 
         # Tính phần thưởng
-        distance_before = heuristic(current_pos, goal)
-        distance_after = heuristic(next_pos, goal)
-        reward = -1  # Phạt nhỏ cho mỗi bước di chuyển
+        distance_before = manhattan_distance(current_pos, goal)
+        distance_after = manhattan_distance(next_pos, goal)
+        reward = -0.5  # Phạt nhẹ cho mỗi bước di chuyển
         if next_pos == goal:
             reward = 100  # Thưởng lớn nếu đến được mục tiêu
-        elif grid[next_pos[1]][next_pos[0]] == 6:  # Gai
-            reward = -10  # Phạt nếu chạm gai
         else:
             # Thưởng/phạt dựa trên khoảng cách đến mục tiêu
-            reward += (distance_before - distance_after) * 2  # Thưởng nếu gần mục tiêu hơn
+            reward += (distance_before - distance_after) * 5  # Thưởng lớn hơn nếu gần mục tiêu
 
         # Mã hóa trạng thái tiếp theo
         next_state = (next_pos[0], next_pos[1], goal[0], goal[1])
@@ -904,6 +904,13 @@ def q_learning_search(start, goal, max_steps=50):
         visited.add(next_pos)
         path.append(next_pos)
         current_pos = next_pos
+
+    # Nếu không tìm thấy đường đi, dùng BFS làm dự phòng
+    if current_pos != goal:
+        path, bfs_states = bfs_search(start, goal)
+        states_explored += bfs_states
+        print(f"Q-Learning Search failed, falling back to BFS: {path}")
+        return path if path else [], states_explored
 
     return path, states_explored
 
@@ -1998,7 +2005,7 @@ def victory_screen(final_score, total_stars):
 
     # Tạo các dòng chữ với viền
     victory_text = render_text_with_outline("You Win!", font_large, YELLOW, GREEN)
-    score_text = render_text_with_outline(f"Final Sco re: {final_score}", font, WHITE, BLACK)
+    score_text = render_text_with_outline(f"Final Score: {final_score}", font, WHITE, BLACK)
     stars_text = render_text_with_outline(f"Total Stars: {total_stars}", font, WHITE, BLACK)
     replay_text = render_text_with_outline("Press R to Replay, Q to Quit", font, WHITE, BLACK)
     ViewPlot_text = render_text_with_outline("Press V to View Plot", font, WHITE, BLACK)
