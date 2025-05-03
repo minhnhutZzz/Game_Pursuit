@@ -167,18 +167,23 @@ def to_grid_pos(x, y):
 def to_pixel_pos(grid_x, grid_y):
     return (MAZE_OFFSET_X + grid_x * GRID_SIZE + GRID_SIZE // 2, MAZE_OFFSET_Y + grid_y * GRID_SIZE + GRID_SIZE // 2)
 
-def spawn_spikes(grid, enemy_pos, exit_pos, num_spikes=5):
-    spike_positions = []
-    for _ in range(num_spikes):
-        x = random.randint(0, GRID_WIDTH - 1)
-        y = random.randint(0, GRID_HEIGHT - 1)
-        while (grid[y][x] != 0 or (x, y) == enemy_pos or (x, y) == exit_pos or
-               (x, y) in spike_positions):
-            x = random.randint(0, GRID_WIDTH - 1)
-            y = random.randint(0, GRID_HEIGHT - 1)
-        grid[y][x] = 6  # Gai có giá trị 6 trên lưới
-        spike_positions.append((x, y))
+
+def spawn_spikes(grid, enemy_pos, exit_pos, num_spikes=10):
+    empty_positions = [(x, y) for y in range(GRID_HEIGHT) for x in range(GRID_WIDTH)
+                       if grid[y][x] == 0 and (x, y) != enemy_pos and (x, y) != exit_pos]
+    print(f"Số ô trống khả dụng: {len(empty_positions)}")
+
+    num_spikes = min(num_spikes, len(empty_positions))
+    if num_spikes == 0:
+        print("Không đủ ô trống để đặt gai")
+        return grid
+
+    spike_positions = random.sample(empty_positions, num_spikes)
+
+    for x, y in spike_positions:
+        grid[y][x] = 6
         print(f"Đặt gai tại: ({x}, {y})")
+
     return grid
 
 
@@ -196,7 +201,7 @@ def get_neighbors(pos):
 
 def bfs_search(start, goal):
     queue = deque([start])
-    came_from = {start: None}
+    came_from = {start: None}  # Lưu thông tin đường đi, nút hiện tại và nút cha của nó
     visited = {start}
     states_explored = 1
 
@@ -212,6 +217,7 @@ def bfs_search(start, goal):
                 came_from[next_pos] = current
                 states_explored += 1
 
+    # Xây dựng đường đi từ goal về start
     path = []
     current = goal
     while current != start:
@@ -222,19 +228,21 @@ def bfs_search(start, goal):
     path.append(start)
     path.reverse()
 
+
     for x, y in path:
         if grid[y][x] == 1:
             return [], states_explored
     return path, states_explored
 
+#-----------------------------------------------
 def heuristic(a, b):
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
 def a_star_search(start, goal):
-    frontier = []
+    frontier = []  # Hàng đợi ưu tiên
     heapq.heappush(frontier, (0, start))
-    came_from = {start: None}
-    cost_so_far = {start: 0}
+    came_from = {start: None}  # Từ điển để lưu thông tin ô cha của mỗi ô
+    cost_so_far = {start: 0}  # g(n)
     states_explored = 1
 
     while frontier:
@@ -243,13 +251,15 @@ def a_star_search(start, goal):
             break
         neighbors = get_neighbors(current)
         for next_pos in neighbors:
-            new_cost = cost_so_far[current] + 1
+            new_cost = cost_so_far[current] + 1  # Tính chi phí g(n)
             states_explored += 1
             if next_pos not in cost_so_far or new_cost < cost_so_far[next_pos]:
                 cost_so_far[next_pos] = new_cost
-                priority = new_cost + heuristic(next_pos, goal)
+                priority = new_cost + heuristic(next_pos, goal)*1.5  # Tính chi phí f(n)
                 heapq.heappush(frontier, (priority, next_pos))
                 came_from[next_pos] = current
+
+
 
     path = []
     current = goal
@@ -313,18 +323,20 @@ def and_or_tree_search(start, goal):
         possible_moves = []
 
         for dx, dy in directions:
-            for steps in range(1, 4):
+            for steps in range(1, 4):  # Giữ khả năng di chuyển 1-3 ô
                 next_x = position[0] + dx * steps
                 next_y = position[1] + dy * steps
                 next_pos = (next_x, next_y)
                 valid = True
-                if not (0 <= next_x < GRID_WIDTH and 0 <= next_y < GRID_HEIGHT and grid[next_y][next_x] != 1):
+                if not (0 <= next_x < GRID_WIDTH and 0 <= next_y < GRID_HEIGHT and
+                        grid[next_y][next_x] != 1 and grid[next_y][next_x] != 6):
                     valid = False
                 else:
                     for s in range(1, steps):
                         check_x = position[0] + dx * s
                         check_y = position[1] + dy * s
-                        if not (0 <= check_x < GRID_WIDTH and 0 <= check_y < GRID_HEIGHT and grid[check_y][check_x] != 1 and grid[check_y][check_x] != 6):
+                        if not (0 <= check_x < GRID_WIDTH and 0 <= check_y < GRID_HEIGHT and
+                                grid[check_y][check_x] != 1 and grid[check_y][check_x] != 6):
                             valid = False
                             break
 
@@ -341,7 +353,14 @@ def and_or_tree_search(start, goal):
         possible_moves.sort(key=lambda move: manhattan_distance(move[0], goal))
 
         for next_pos, steps in possible_moves:
-            new_path = path + [next_pos]
+            # Tạo đường đi chi tiết (thêm các ô trung gian)
+            detailed_path = []
+            dx = (next_pos[0] - position[0]) // steps
+            dy = (next_pos[1] - position[1]) // steps
+            for s in range(1, steps + 1):
+                intermediate_pos = (position[0] + dx * s, position[1] + dy * s)
+                detailed_path.append(intermediate_pos)
+            new_path = path + detailed_path
             queue.append((next_pos, new_path))
 
     print(f"AND-OR Tree Search failed to find a path to goal.")
@@ -386,7 +405,8 @@ def forward_checking_search(start, goal):
             return path, True
         current = path[-1]
         neighbors = get_neighbors(current)
-        neighbors.sort(key=lambda pos: heuristic(pos, goal))
+        # Sắp xếp theo heuristic, thêm yếu tố ngẫu nhiên để thoát kẹt
+        neighbors.sort(key=lambda pos: heuristic(pos, goal) + random.random() * 0.1)
         visited = set(path)
         for next_pos in neighbors:
             if next_pos in path:
@@ -399,6 +419,14 @@ def forward_checking_search(start, goal):
                 if success:
                     return result_path, True
                 path.pop()
+            else:
+                # Nếu can_reach_goal trả về False, thử nhánh khác với xác suất nhỏ
+                if random.random() < 0.1:  # 10% cơ hội tiếp tục dù không chắc chắn
+                    path.append(next_pos)
+                    result_path, success = backtrack(path, depth + 1)
+                    if success:
+                        return result_path, True
+                    path.pop()
 
         return [], False
 
@@ -409,7 +437,7 @@ def forward_checking_search(start, goal):
         print(f"Backtracking Search with Forward Checking failed to find a path to goal.")
         return [], states_explored[0]
     for x, y in path:
-        if grid[y][x] == 1:
+        if grid[y][x] == 1 or grid[y][x] == 6:
             return [], states_explored[0]
     return path, states_explored[0]
 
@@ -442,7 +470,7 @@ def q_learning_search(start, goal, max_episodes=100, max_steps=100):
     global epsilon
     alpha = 0.2
     gamma = 0.9
-    epsilon = 0.3
+    epsilon = 0.5  # Tăng epsilon ban đầu để khám phá tốt hơn
     states_explored = 0
     best_states_explored = float('inf')
     no_improvement_count = 0
@@ -452,7 +480,7 @@ def q_learning_search(start, goal, max_episodes=100, max_steps=100):
         current_pos = start
         max_delta = 0
         episode_states_explored = 0
-        epsilon = max(0.05, epsilon * 0.995)
+        epsilon = max(0.1, epsilon * 0.999)  # Giảm chậm hơn để tiếp tục khám phá
 
         for step in range(max_steps):
             state = (current_pos[0], current_pos[1])
@@ -508,6 +536,7 @@ def q_learning_search(start, goal, max_episodes=100, max_steps=100):
             print(f"Q-Learning stopped after {episode + 1} episodes due to no improvement")
             break
 
+    # Trích xuất đường đi
     path = [start]
     current_pos = start
     visited = set([start])
@@ -516,15 +545,30 @@ def q_learning_search(start, goal, max_episodes=100, max_steps=100):
         state = (current_pos[0], current_pos[1])
         if state not in q_table:
             break
-        action = max(q_table[state], key=q_table[state].get)
+        # Chọn hành động tốt nhất, nhưng thêm yếu tố ngẫu nhiên để thoát kẹt
+        actions = list(q_table[state].items())
+        actions.sort(key=lambda x: x[1], reverse=True)
+        action = actions[0][0] if random.random() < 0.9 else random.choice([a for a, _ in actions])
         dx, dy = get_direction_from_action(action)
         next_pos = (current_pos[0] + dx, current_pos[1] + dy)
-        if next_pos not in get_neighbors(current_pos) or next_pos in visited:
-            break
-        visited.add(next_pos)
-        path.append(next_pos)
-        current_pos = next_pos
-        steps += 1
+        if next_pos in get_neighbors(current_pos) and next_pos not in visited:
+            visited.add(next_pos)
+            path.append(next_pos)
+            current_pos = next_pos
+            steps += 1
+        else:
+            # Nếu bị kẹt, thử hướng khác
+            for action in range(4):
+                dx, dy = get_direction_from_action(action)
+                next_pos = (current_pos[0] + dx, current_pos[1] + dy)
+                if next_pos in get_neighbors(current_pos) and next_pos not in visited:
+                    visited.add(next_pos)
+                    path.append(next_pos)
+                    current_pos = next_pos
+                    steps += 1
+                    break
+            else:
+                break
 
     return path, states_explored
 
@@ -569,6 +613,13 @@ class Enemy(pygame.sprite.Sprite):
         self.path_update_timer = 0
         self.path_update_interval = FPS // 5
 
+        # Tính đường đi một lần khi khởi tạo
+        target_pos = get_exit_position()
+        results = choose_algorithm(tuple(self.grid_pos), target_pos, self.algorithm, is_special_mode=True)
+        algorithms = ['A*', 'BFS', 'Beam Search', 'AND-OR Tree', 'Forward-Checking', 'Q-Learning']
+        self.path, _ = results[algorithms.index(self.algorithm)]
+        print(f"{self.algorithm} khởi tạo đường đi: {self.path}")
+
         label_map = {
             'BFS': 'BFS',
             'A*': 'A*',
@@ -577,7 +628,7 @@ class Enemy(pygame.sprite.Sprite):
             'Forward-Checking': 'FC',
             'Q-Learning': 'QL'
         }
-        self.label_text = label_map.get(self.algorithm, self.algorithm)  # Lưu label_text
+        self.label_text = label_map.get(self.algorithm, self.algorithm)
         try:
             label_font = pygame.font.Font("freesansbold.ttf", 14)
         except:
@@ -599,33 +650,37 @@ class Enemy(pygame.sprite.Sprite):
     def update(self):
         delta_time = clock.get_time() / 1000.0
         self.path_update_timer += 1
-        if self.path_update_timer >= self.path_update_interval and not self.moving:
+
+        # Chỉ tính lại đường đi nếu path rỗng hoặc quái vật bị kẹt
+        if not self.path or self.path_update_timer >= self.path_update_interval and not self.moving:
             self.path_update_timer = 0
             target_pos = get_exit_position()
             results = choose_algorithm(tuple(self.grid_pos), target_pos, self.algorithm, is_special_mode=True)
-            algorithms = ['BFS', 'A*', 'Beam Search', 'AND-OR Tree', 'Forward-Checking', 'Q-Learning']
+            algorithms = ['A*', 'BFS', 'Beam Search', 'AND-OR Tree', 'Forward-Checking', 'Q-Learning']
             self.path, _ = results[algorithms.index(self.algorithm)]
+            print(f"{self.algorithm} tính lại đường đi: {self.path}")
 
-            if self.path and len(self.path) > 1:
-                self.last_path = self.path[:]
-                next_grid_pos = self.path[1]
-                x, y = next_grid_pos
-                if 0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT and grid[y][x] != 1 and grid[y][x] != 6:
-                    self.target_pixel_pos = list(to_pixel_pos(next_grid_pos[0], next_grid_pos[1]))
-                    self.moving = True
-                else:
-                    self.path = self.last_path[:] if self.last_path else [self.grid_pos]
-                    self.moving = False
+        if self.path and len(self.path) > 1:
+            self.last_path = self.path[:]
+            next_grid_pos = self.path[1]
+            x, y = next_grid_pos
+            if 0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT and grid[y][x] != 1 and grid[y][x] != 6:
+                self.target_pixel_pos = list(to_pixel_pos(next_grid_pos[0], next_grid_pos[1]))
+                self.moving = True
             else:
-                neighbors = get_neighbors(tuple(self.grid_pos))  # get_neighbors đã loại ô gai
-                if neighbors:
-                    next_pos = random.choice(neighbors)
-                    self.path = [self.grid_pos[:], list(next_pos)]
-                    self.target_pixel_pos = list(to_pixel_pos(next_pos[0], next_pos[1]))
-                    self.moving = True
-                    print(f"{self.algorithm} di chuyển ngẫu nhiên đến: {next_pos}")
-                else:
-                    self.moving = False
+                print(f"{self.algorithm} không di chuyển đến: ({x}, {y}) vì grid[{y}][{x}] = {grid[y][x]}")
+                self.path = self.last_path[:] if self.last_path else [self.grid_pos]
+                self.moving = False
+        else:
+            neighbors = get_neighbors(tuple(self.grid_pos))
+            if neighbors:
+                next_pos = random.choice(neighbors)
+                self.path = [self.grid_pos[:], list(next_pos)]
+                self.target_pixel_pos = list(to_pixel_pos(next_pos[0], next_pos[1]))
+                self.moving = True
+                print(f"{self.algorithm} di chuyển ngẫu nhiên đến: {next_pos}")
+            else:
+                self.moving = False
 
         if self.moving and len(self.path) > 1:
             dx = self.target_pixel_pos[0] - self.pixel_pos[0]
@@ -677,6 +732,7 @@ def choose_algorithm(start, goal, selected_algorithm, is_special_mode=False):
     global performance_data, current_map_index, algorithm_runs
     algorithms = ['BFS', 'A*', 'Beam Search', 'AND-OR Tree', 'Forward-Checking', 'Q-Learning']
     results = []
+    seen_algorithms = {run['algorithm'] for run in algorithm_runs}
 
     for algorithm in algorithms:
         start_time = time.perf_counter()
@@ -695,18 +751,21 @@ def choose_algorithm(start, goal, selected_algorithm, is_special_mode=False):
         end_time = time.perf_counter()
         runtime_ms = (end_time - start_time) * 1000
 
-        run_info = {
-            'algorithm': algorithm,
-            'map_index': current_map_index,
-            'steps': len(path),
-            'runtime_ms': runtime_ms,
-            'path': path,
-            'states_explored': states_explored
-        }
-        algorithm_runs.append(run_info)
+        if algorithm not in seen_algorithms:
+            run_info = {
+                'algorithm': algorithm,
+                'map_index': current_map_index,
+                'steps': len(path),
+                'runtime_ms': runtime_ms,
+                'path': path,
+                'states_explored': states_explored
+            }
+            algorithm_runs.append(run_info)
+            seen_algorithms.add(algorithm)
+            print(f"Special Mode: Recorded {algorithm} with steps: {len(path)}, states: {states_explored}, time: {runtime_ms:.2f} ms")
+
         performance_data[algorithm]['states'] = states_explored
         performance_data[algorithm]['time'] = runtime_ms
-        print(f"Special Mode: Recorded {algorithm} with states: {states_explored}, time: {runtime_ms:.2f} ms")
         results.append((path, states_explored))
 
     return results
@@ -1021,13 +1080,28 @@ def splash_screen():
 
     return True
 
-# Màn hình menu
 def menu_screen():
     global frame_index
     menu_active = True
-    selected = False
+    difficulty_options = ["Easy", "Medium", "Hard"]
+    selected_difficulty = 0
+    state = "difficulty"  # Bắt đầu với chọn độ khó
     blink_counter = 0
     blink_interval = 30
+
+    try:
+        pygame.mixer.music.stop()
+        pygame.mixer.music.load(r"asset\nhac\nhac_giao_dien.mp3")
+        pygame.mixer.music.play(-1)
+    except:
+        print("Không thể tải menu_music.mp3")
+
+    try:
+        title_font = pygame.font.Font("freesansbold.ttf", 80)
+        option_font = pygame.font.Font("freesansbold.ttf", 60)
+    except:
+        title_font = pygame.font.Font(None, 80)
+        option_font = pygame.font.Font(None, 50)
 
     def render_text_with_outline(text, font, text_color, outline_color):
         text_surface = font.render(text, True, text_color)
@@ -1037,16 +1111,6 @@ def menu_screen():
             surface.blit(outline_surface, (dx + 2, dy + 2))
         surface.blit(text_surface, (2, 2))
         return surface
-
-    try:
-        pygame.mixer.music.stop()
-        pygame.mixer.music.load(r"asset\nhac\nhac_giao_dien.mp3")
-        pygame.mixer.music.play(-1)
-    except:
-        print("Không thể tải menu_music.mp3")
-
-    title_font = pygame.font.Font("freesansbold.ttf", 80)
-    option_font = pygame.font.Font("freesansbold.ttf", 60)
 
     while menu_active:
         if background_frames:
@@ -1058,19 +1122,44 @@ def menu_screen():
         title_text = title_font.render("Pursuit Game", True, YELLOW)
         title_shadow = title_font.render("Pursuit Game", True, BLACK)
         title_rect = title_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 4))
-
         screen.blit(title_shadow, title_rect.move(2, 2))
         screen.blit(title_text, title_rect)
 
         blink_counter = (blink_counter + 1) % (blink_interval * 2)
-        if blink_counter < blink_interval:
-            color = WHITE
-        else:
-            color = GREEN
 
-        text_surface = render_text_with_outline("Start", option_font, color, DARK_RED)
-        text_rect = text_surface.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2))
-        screen.blit(text_surface, text_rect)
+        if state == "difficulty":
+            instruction_text = option_font.render("Select Difficulty:", True, WHITE)
+            instruction_rect = instruction_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 3))
+            for offset in [(-2, -2), (2, -2), (-2, 2), (2, 2)]:
+                screen.blit(option_font.render("Select Difficulty:", True, BLACK), instruction_rect.move(*offset))
+            screen.blit(instruction_text, instruction_rect)
+
+            for i, difficulty in enumerate(difficulty_options):
+                if i == selected_difficulty:
+                    if blink_counter < blink_interval:
+                        color = YELLOW
+                    else:
+                        color = GREEN
+                else:
+                    color = WHITE
+                text_surface = render_text_with_outline(difficulty, option_font, color, DARK_RED)
+                text_rect = text_surface.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + i * 60))
+                screen.blit(text_surface, text_rect)
+
+        elif state == "mode":
+            instruction_text = option_font.render("Select Mode:", True, WHITE)
+            instruction_rect = instruction_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 3))
+            for offset in [(-2, -2), (2, -2), (-2, 2), (2, 2)]:
+                screen.blit(option_font.render("Select Mode:", True, BLACK), instruction_rect.move(*offset))
+            screen.blit(instruction_text, instruction_rect)
+
+            if blink_counter < blink_interval:
+                color = WHITE
+            else:
+                color = GREEN
+            text_surface = render_text_with_outline("Start", option_font, color, DARK_RED)
+            text_rect = text_surface.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2))
+            screen.blit(text_surface, text_rect)
 
         pygame.display.flip()
         clock.tick(FPS)
@@ -1079,11 +1168,22 @@ def menu_screen():
             if event.type == pygame.QUIT:
                 return None
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN:
-                    print("Selected Special Mode")
-                    return "Special Mode"
-                elif event.key == pygame.K_ESCAPE:
-                    return None
+                if state == "difficulty":
+                    if event.key == pygame.K_UP:
+                        selected_difficulty = (selected_difficulty - 1) % len(difficulty_options)
+                    elif event.key == pygame.K_DOWN:
+                        selected_difficulty = (selected_difficulty + 1) % len(difficulty_options)
+                    elif event.key == pygame.K_RETURN:
+                        print(f"Selected difficulty: {difficulty_options[selected_difficulty]}")
+                        state = "mode"
+                    elif event.key == pygame.K_ESCAPE:
+                        return None
+                elif state == "mode":
+                    if event.key == pygame.K_RETURN:
+                        print("Selected Special Mode")
+                        return difficulty_options[selected_difficulty]
+                    elif event.key == pygame.K_ESCAPE:
+                        return None
 
     return None
 
@@ -1161,8 +1261,8 @@ while running:
     if not splash_screen():
         break
 
-    mode = menu_screen()
-    if mode != 'Special Mode':
+    difficulty = menu_screen()
+    if difficulty is None:
         break
 
     try:
@@ -1175,6 +1275,9 @@ while running:
     game_active = True
     current_map_index = 0
     algorithm_runs = []
+
+    num_spikes = {"Easy": 3, "Medium": 7, "Hard": 10}.get(difficulty, 5)
+    print(f"Độ khó: {difficulty}, số gai: {num_spikes}")
 
     while game_active:
         load_map("Me cung")
@@ -1198,16 +1301,20 @@ while running:
             while enemy_pos == exit_pos:
                 enemy_pos = get_empty_position()
 
-        # đặt gai trên lưới
-        grid = spawn_spikes(grid, enemy_pos, exit_pos, num_spikes=5)
+        grid = spawn_spikes(grid, enemy_pos, exit_pos, num_spikes=num_spikes)
+        print("Lưới sau khi đặt gai:")
+        for y in range(GRID_HEIGHT):
+            print(grid[y])
 
-        algorithms = ["BFS", "A*", "Beam Search", "AND-OR Tree", "Forward-Checking", "Q-Learning"]
+        algorithms = ["A*", "BFS", "Beam Search", "AND-OR Tree", "Forward-Checking", "Q-Learning"]
         for idx, algo in enumerate(algorithms):
             enemy = Enemy(enemy_pos[0], enemy_pos[1], algo)
             enemy.label_offset_y = -20 - (idx * 3)
             all_sprites.add(enemy)
             enemies.add(enemy)
             print(f"Spawned {algo} enemy at position: {enemy_pos}")
+
+        reached_goal = []
 
         while game_active:
             clock.tick(FPS)
@@ -1219,15 +1326,20 @@ while running:
             all_sprites.update()
             for enemy in enemies:
                 x, y = enemy.grid_pos
-                if grid[y][x] == 1:
+                if grid[y][x] == 1 or grid[y][x] == 6:
                     enemy.grid_pos = list(get_empty_position())
-                    enemy.pixel_pos = list(to_pixel_pos(enemy.grid_pos[0], enemy.grid_pos[1]))
+                    enemy.pixel_pos = list(to_pixel_pos(enemy.grid_pos[0], enemy_pos[1]))
                     enemy.rect.center = (int(enemy.pixel_pos[0]), int(enemy.pixel_pos[1]))
                     enemy.path = []
                     enemy.moving = False
+                    print(f"{enemy.algorithm} bị kẹt tại ({x}, {y}), grid[{y}][{x}] = {grid[y][x]}, di chuyển đến vị trí mới")
 
                 if tuple(enemy.grid_pos) == exit_pos:
-                    fastest_algo = enemy.algorithm  # Lấy thuật toán của quái vật đến đầu tiên
+                    reached_goal.append((enemy.algorithm, pygame.time.get_ticks()))
+                    print(f"{enemy.algorithm} đến lối ra tại frame {pygame.time.get_ticks()}")
+                    # Chọn thuật toán đến đích đầu tiên
+                    fastest_algo = reached_goal[0][0]
+                    print(f"Chiến thắng: {fastest_algo} đến lối ra đầu tiên")
                     replay = victory_screen(fastest_algo, mode='Special Mode')
                     if not replay:
                         running = False
