@@ -4,11 +4,14 @@ Dự án Pursuit Game là một trò chơi mê cung được phát triển nhằ
 ### 2. Kết quả thực hiện
 [!Giao diện tải tài nguyên](Load_Tainguyen.png)
 *Giao diện tải tài nguyên*
+
 [!Giao diện chọn mức độ chơi](ChonLevel.png)
 *Giao diện chọn mức độ chơi*
+
 [!Chơi ở mức độ Easy](Easy.gif)
 *Chơi ở mức độ Easy*
  
 Tương tự ở mức độ Medium, Hard
+
 [!Phân tích hiệu suất](Phantichketqua_Easy.png)
 *Phân tích kết quả ở mức độ Easy*
