@@ -306,80 +306,71 @@ def beam_search(start, goal):
     return [], states_explored
 
 def and_or_tree_search(start, goal):
-    queue = deque([(start, [start])])
+    global grid, GRID_WIDTH, GRID_HEIGHT
+    # Khởi tạo path với một phần tử giả để đồng nhất kiểu
+    initial_path = [(start, "start")]
+    queue = deque([(start, initial_path, {start}, "start")])
     visited = set()
     states_explored = 1
+    max_steps = 1000
 
-    while queue:
-        state, path = queue.popleft()
-        position = state
-        if position in visited:
+    while queue and states_explored < max_steps:
+        pos, path, and_group, _ = queue.popleft()  # Bỏ action vì không dùng
+        states_explored += 1
+
+        # Kiểm tra nhánh AND: Tất cả trạng thái trong and_group phải đạt mục tiêu
+        if all(p == goal for p in and_group):
+            state_path = [p for p, a in path] + [pos]
+            return state_path[1:], states_explored  # Bỏ phần tử giả "start"
+
+        # Chuyển trạng thái thành tuple để lưu vào visited
+        state_tuple = (pos, frozenset(and_group))
+        if state_tuple in visited:
             continue
-        visited.add(position)
-        if position == goal:
-            return path, states_explored
+        visited.add(state_tuple)
 
-        directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
-        possible_moves = []
+        # Nhánh OR: Lựa chọn giữa các hành động (lên, xuống, trái, phải)
+        neighbors = get_neighbors(pos)
+        for action_idx, neighbor in enumerate(neighbors):
+            # Nhánh AND: Tạo tất cả trạng thái có thể xảy ra sau hành động
+            and_states = set()
+            action_name = ["right", "left", "down", "up"][action_idx % 4]
 
-        for dx, dy in directions:
-            for steps in range(1, 4):  # Giữ khả năng di chuyển 1-3 ô
-                next_x = position[0] + dx * steps
-                next_y = position[1] + dy * steps
-                next_pos = (next_x, next_y)
-                valid = True
-                if not (0 <= next_x < GRID_WIDTH and 0 <= next_y < GRID_HEIGHT and
-                        grid[next_y][next_x] != 1 and grid[next_y][next_x] != 6):
-                    valid = False
-                else:
-                    for s in range(1, steps):
-                        check_x = position[0] + dx * s
-                        check_y = position[1] + dy * s
-                        if not (0 <= check_x < GRID_WIDTH and 0 <= check_y < GRID_HEIGHT and
-                                grid[check_y][check_x] != 1 and grid[check_y][check_x] != 6):
-                            valid = False
-                            break
+            # Trường hợp 1: Di chuyển đúng hướng (xác suất 90%)
+            and_states.add(neighbor)
 
-                if valid and next_pos not in visited and next_pos not in path:
-                    prob = random.random()
-                    if steps == 1 and prob < 0.95:
-                        possible_moves.append((next_pos, steps))
-                    elif steps == 2 and prob < 0.98:
-                        possible_moves.append((next_pos, steps))
-                    elif steps == 3 and prob < 1.0:
-                        possible_moves.append((next_pos, steps))
+            # Trường hợp 2: Di chuyển sang hướng khác (xác suất 30% chia đều)
+            if random.random() < 0.3:
+                # Lấy tất cả hướng hợp lệ khác (loại bỏ hướng chính)
+                other_neighbors = [n for n in neighbors if n != neighbor]
+                for other_neighbor in other_neighbors:
+                    and_states.add(other_neighbor)
 
-        states_explored += len(possible_moves)
-        possible_moves.sort(key=lambda move: manhattan_distance(move[0], goal))
+            # Thêm nhánh AND vào hàng đợi
+            if and_states:
+                queue.append((
+                    neighbor,  # Tiến tới ô dự định
+                    path + [(pos, action_name)],
+                    and_states,
+                    action_name
+                ))
 
-        for next_pos, steps in possible_moves:
-            # Tạo đường đi chi tiết (thêm các ô trung gian)
-            detailed_path = []
-            dx = (next_pos[0] - position[0]) // steps
-            dy = (next_pos[1] - position[1]) // steps
-            for s in range(1, steps + 1):
-                intermediate_pos = (position[0] + dx * s, position[1] + dy * s)
-                detailed_path.append(intermediate_pos)
-            new_path = path + detailed_path
-            queue.append((next_pos, new_path))
+        # # Sắp xếp queue theo heuristic để ưu tiên trạng thái gần mục tiêu
+        # queue = deque(sorted(queue,
+        #                      key=lambda x: min(manhattan_distance(p, goal) for p in x[2])))
 
-    print(f"AND-OR Tree Search failed to find a path to goal.")
     return [], states_explored
 
 
 
 def can_reach_goal(pos, goal, visited, states_explored_ref):
+    # Hàm này kiểm tra xem có thể đến được goal từ pos mà không đi qua các ô trong visited.
+
     frontier = [(heuristic(pos, goal), pos)]
     cost_so_far = {pos: 0}
-    max_steps = 1000
 
-    steps = 0
     while frontier:
-        steps += 1
-        if steps > max_steps:
-            return False
-
-        _, current = heapq.heappop(frontier)
+        _, current = heappop(frontier)
         if current == goal:
             return True
 
@@ -387,58 +378,56 @@ def can_reach_goal(pos, goal, visited, states_explored_ref):
         for next_pos in neighbors:
             if next_pos in visited:
                 continue
-            new_cost = cost_so_far[current] + 1
+            new_cost = cost_so_far[current] + 1 #g(n)
             if new_cost < cost_so_far.get(next_pos, float('inf')):
                 cost_so_far[next_pos] = new_cost
-                priority = new_cost + heuristic(next_pos, goal)
+                priority = new_cost + heuristic(next_pos, goal) # f(n)= g(n) + h(n)
                 heappush(frontier, (priority, next_pos))
                 states_explored_ref[0] += 1
 
     return False
 
+
 def forward_checking_search(start, goal):
     def backtrack(path, depth):
         nonlocal states_explored
-        if depth >= 100:
-            return [], False
         if path[-1] == goal:
             return path, True
+
         current = path[-1]
         neighbors = get_neighbors(current)
-        # Sắp xếp theo heuristic, thêm yếu tố ngẫu nhiên để thoát kẹt
-        neighbors.sort(key=lambda pos: heuristic(pos, goal) + random.random() * 0.1)
+        # Sắp xếp các ô lân cận theo khoảng cách Manhattan để ưu tiên đường gần goal
+        neighbors.sort(key=lambda pos: heuristic(pos, goal))
         visited = set(path)
+
+        # Thử từng ô lân cận
         for next_pos in neighbors:
             if next_pos in path:
                 continue
+            # Kiểm tra trước: Có thể đến goal từ next_pos không
             can_reach = can_reach_goal(next_pos, goal, visited, states_explored)
             states_explored[0] += 1
+            # Nếu có thể đến goal, thêm next_pos vào đường đi và tiếp tục đệ quy
             if can_reach:
                 path.append(next_pos)
                 result_path, success = backtrack(path, depth + 1)
                 if success:
                     return result_path, True
-                path.pop()
-            else:
-                # Nếu can_reach_goal trả về False, thử nhánh khác với xác suất nhỏ
-                if random.random() < 0.1:  # 10% cơ hội tiếp tục dù không chắc chắn
-                    path.append(next_pos)
-                    result_path, success = backtrack(path, depth + 1)
-                    if success:
-                        return result_path, True
-                    path.pop()
+                path.pop()  # Quay lui: bỏ next_pos nếu không thành công
 
         return [], False
 
     states_explored = [0]
     path = [start]
     path, success = backtrack(path, 0)
+    # Nếu thất bại, in thông báo và trả về đường đi rỗng
     if not success:
         print(f"Backtracking Search with Forward Checking failed to find a path to goal.")
         return [], states_explored[0]
     for x, y in path:
         if grid[y][x] == 1 or grid[y][x] == 6:
             return [], states_explored[0]
+    # Trả về đường đi và số trạng thái đã khám phá
     return path, states_explored[0]
 
 q_table = {}
@@ -468,64 +457,82 @@ def get_direction_from_action(action):
 
 def q_learning_search(start, goal, max_episodes=100, max_steps=100):
     global epsilon
-    alpha = 0.2
-    gamma = 0.9
-    epsilon = 0.5  # Tăng epsilon ban đầu để khám phá tốt hơn
+
+    alpha = 0.2  # Tốc độ học : Quyết định mức độ ảnh hưởng của phần thưởng mới
+    gamma = 0.9 # Hệ số chiết khấu: Quyết định tầm quan trọng của phần thưởng tương lai
+    epsilon = 0.5 # Xác suất khám phá ban đầu: Tăng để khám phá nhiều trạng thái hơn
+
     states_explored = 0
     best_states_explored = float('inf')
-    no_improvement_count = 0
-    convergence_threshold = 0.1
+    no_improvement_count = 0 # số vòng lặp không cải thiện
+    convergence_threshold = 0.1  # Ngưỡng hội tụ
 
+    # Giai đoạn học
     for episode in range(max_episodes):
         current_pos = start
         max_delta = 0
         episode_states_explored = 0
-        epsilon = max(0.1, epsilon * 0.999)  # Giảm chậm hơn để tiếp tục khám phá
-
+        # Giảm epsilon để chuyển từ khám phá sang khai thác
+        epsilon = max(0.1, epsilon * 0.999)
         for step in range(max_steps):
             state = (current_pos[0], current_pos[1])
             if state not in q_table:
                 q_table[state] = {a: 0.0 for a in range(4)}
 
+            # Chọn hành động theo chiến lược epsilon-greedy
             if random.random() < epsilon:
+                # Khám phá: Chọn hành động ngẫu nhiên
                 action = random.randint(0, 3)
             else:
+                # Khai thác: Chọn hành động có giá trị Q cao nhất
                 action = max(q_table[state], key=q_table[state].get)
 
+            # Chuyển hành động thành hướng di chuyển và tính vị trí tiếp theo
             dx, dy = get_direction_from_action(action)
             next_pos = (current_pos[0] + dx, current_pos[1] + dy)
             neighbors = get_neighbors(current_pos)
 
+            # Tính phần thưởng
             if next_pos not in neighbors:
+                # Phạt nặng nếu đi vào tường/gai và giữ nguyên vị trí
                 reward = -10
                 next_pos = current_pos
             else:
+                # Tính phần thưởng dựa trên việc giảm khoảng cách đến goal
                 distance_before = manhattan_distance(current_pos, goal)
                 distance_after = manhattan_distance(next_pos, goal)
                 reward = -0.5 + (distance_before - distance_after) * 5
+                # Thưởng lớn nếu đến được goal
                 if next_pos == goal:
                     reward = 100
 
+            # Trạng thái tiếp theo (next_state) là tọa độ mới
             next_state = (next_pos[0], next_pos[1])
+            # Khởi tạo giá trị Q cho trạng thái tiếp theo nếu chưa có
             if next_state not in q_table:
                 q_table[next_state] = {a: 0.0 for a in range(4)}
 
+            # Cập nhật giá trị Q theo công thức Q-Learning
             old_value = q_table[state][action]
             max_future_q = max(q_table[next_state].values())
             q_table[state][action] = old_value + alpha * (reward + gamma * max_future_q - old_value)
+            # Theo dõi thay đổi lớn nhất của giá trị Q để kiểm tra hội tụ
             max_delta = max(max_delta, abs(old_value - q_table[state][action]))
 
             states_explored += 1
             episode_states_explored += 1
             current_pos = next_pos
 
+            # Dừng vòng nếu đã đến goal
             if current_pos == goal:
                 break
 
+        # Kiểm tra hội tụ: Dừng nếu thay đổi giá trị Q nhỏ hơn ngưỡng
         if max_delta < convergence_threshold:
             print(f"Q-Learning converged after {episode + 1} episodes")
             break
 
+        # Kiểm tra cải thiện: Dừng nếu không cải thiện sau 30 vòng
         if episode_states_explored >= best_states_explored:
             no_improvement_count += 1
         else:
@@ -536,7 +543,7 @@ def q_learning_search(start, goal, max_episodes=100, max_steps=100):
             print(f"Q-Learning stopped after {episode + 1} episodes due to no improvement")
             break
 
-    # Trích xuất đường đi
+    # Giai đoạn trích xuất đường đi: Sử dụng bảng Q để tìm đường đi tốt nhất
     path = [start]
     current_pos = start
     visited = set([start])
@@ -545,19 +552,21 @@ def q_learning_search(start, goal, max_episodes=100, max_steps=100):
         state = (current_pos[0], current_pos[1])
         if state not in q_table:
             break
-        # Chọn hành động tốt nhất, nhưng thêm yếu tố ngẫu nhiên để thoát kẹt
+        # Sắp xếp các hành động theo giá trị Q giảm dần
         actions = list(q_table[state].items())
         actions.sort(key=lambda x: x[1], reverse=True)
+        # Chọn hành động tốt nhất (90% thời gian) hoặc ngẫu nhiên (10%) để thoát kẹt
         action = actions[0][0] if random.random() < 0.9 else random.choice([a for a, _ in actions])
         dx, dy = get_direction_from_action(action)
         next_pos = (current_pos[0] + dx, current_pos[1] + dy)
+        # Kiểm tra tính hợp lệ và tránh vòng lặp
         if next_pos in get_neighbors(current_pos) and next_pos not in visited:
             visited.add(next_pos)
             path.append(next_pos)
             current_pos = next_pos
             steps += 1
         else:
-            # Nếu bị kẹt, thử hướng khác
+            # Nếu bị kẹt, thử các hướng khác
             for action in range(4):
                 dx, dy = get_direction_from_action(action)
                 next_pos = (current_pos[0] + dx, current_pos[1] + dy)
