@@ -14,6 +14,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import pandas as pd
 import numpy as np
+from functools import lru_cache
 
 current_map_index = 0
 
@@ -98,7 +99,7 @@ MAPS = {
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
         [1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1],
+        [1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
         [1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -336,7 +337,7 @@ def and_or_tree_search(start, goal):
             and_states = set()
             action_name = ["right", "left", "down", "up"][action_idx % 4]
 
-            # Trường hợp 1: Di chuyển đúng hướng (xác suất 90%)
+            # Trường hợp 1: Di chuyển đúng hướng (xác suất 70%)
             and_states.add(neighbor)
 
             # Trường hợp 2: Di chuyển sang hướng khác (xác suất 30% chia đều)
@@ -621,6 +622,7 @@ class Enemy(pygame.sprite.Sprite):
         self.moving = False
         self.path_update_timer = 0
         self.path_update_interval = FPS // 5
+        self.has_reached_goal = False  # Thêm thuộc tính để theo dõi trạng thái đến đích
 
         # Tính đường đi một lần khi khởi tạo
         target_pos = get_exit_position()
@@ -657,6 +659,11 @@ class Enemy(pygame.sprite.Sprite):
         self.label_offset_y = -20
 
     def update(self):
+        if self.has_reached_goal:  # Nếu đã đến đích, không cập nhật gì
+            self.rect.center = (int(self.pixel_pos[0]), int(self.pixel_pos[1]))
+            self.label_rect.center = (self.rect.centerx, self.rect.top + self.label_offset_y)
+            return
+
         delta_time = clock.get_time() / 1000.0
         self.path_update_timer += 1
 
@@ -1341,19 +1348,26 @@ while running:
                     enemy.rect.center = (int(enemy.pixel_pos[0]), int(enemy.pixel_pos[1]))
                     enemy.path = []
                     enemy.moving = False
-                    print(f"{enemy.algorithm} bị kẹt tại ({x}, {y}), grid[{y}][{x}] = {grid[y][x]}, di chuyển đến vị trí mới")
+                    print(
+                        f"{enemy.algorithm} bị kẹt tại ({x}, {y}), grid[{y}][{x}] = {grid[y][x]}, di chuyển đến vị trí mới")
 
-                if tuple(enemy.grid_pos) == exit_pos:
+                if tuple(enemy.grid_pos) == exit_pos and enemy.algorithm not in [algo for algo, _ in reached_goal]:
+                    enemy.has_reached_goal = True  # Dừng quái vật tại lối ra
                     reached_goal.append((enemy.algorithm, pygame.time.get_ticks()))
                     print(f"{enemy.algorithm} đến lối ra tại frame {pygame.time.get_ticks()}")
-                    # Chọn thuật toán đến đích đầu tiên
-                    fastest_algo = reached_goal[0][0]
-                    print(f"Chiến thắng: {fastest_algo} đến lối ra đầu tiên")
-                    replay = victory_screen(fastest_algo, mode='Special Mode')
-                    if not replay:
-                        running = False
-                    game_active = False
-                    break
+
+            # Kiểm tra nếu tất cả thuật toán đã đến đích
+            if len(reached_goal) == len(algorithms):
+                print("Tất cả thuật toán đã đến đích!")
+                # Sắp xếp reached_goal theo thời gian để lấy thuật toán nhanh nhất
+                reached_goal.sort(key=lambda x: x[1])
+                fastest_algo = reached_goal[0][0]
+                print(f"Thuật toán nhanh nhất: {fastest_algo}")
+                replay = victory_screen(fastest_algo, mode='Special Mode')
+                if not replay:
+                    running = False
+                game_active = False
+                break
 
             if not game_active:
                 break
